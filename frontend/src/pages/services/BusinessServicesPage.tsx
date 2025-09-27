@@ -283,7 +283,6 @@ const BusinessServicesPage: React.FC = () => {
 
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
       const newApplication: BusinessApplication = {
         id: Date.now().toString(),
         serviceId: selectedService.id,
@@ -294,14 +293,18 @@ const BusinessServicesPage: React.FC = () => {
         submissionDate: new Date().toISOString(),
         referenceNumber: `REF${Date.now()}`,
       };
-
       setApplications(prev => [newApplication, ...prev]);
       toast.success('Application submitted successfully!');
       setShowApplicationDialog(false);
       setShowRegistrationWizard(false);
       resetForm();
     } catch (error) {
-      toast.error('Failed to submit application');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Business application submission error:', error);
+      }
+      toast.error('Failed to submit application. Please try again or contact support if the problem persists.');
     }
   };
 
@@ -438,7 +441,7 @@ const BusinessServicesPage: React.FC = () => {
   const renderApplications = () => (
     <Box>
       {applications.length === 0 ? (
-        <Alert severity="info">
+        <Alert severity="info" role="status" aria-live="polite">
           You haven't submitted any business applications yet. Apply for services to get started.
         </Alert>
       ) : (
@@ -763,6 +766,16 @@ const BusinessServicesPage: React.FC = () => {
                   value={applicationForm.description}
                   onChange={(e) => setApplicationForm(prev => ({ ...prev, description: e.target.value }))}
                   helperText="Briefly describe your business activities"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Business Address"
+                  value={applicationForm.address}
+                  onChange={(e) => setApplicationForm(prev => ({ ...prev, address: e.target.value }))}
+                  required
+                  placeholder="e.g., 15 Market Street, Port Harcourt, Rivers State, Nigeria"
                 />
               </Grid>
             </Grid>

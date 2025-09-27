@@ -191,7 +191,7 @@ const HousingServicesPage: React.FC = () => {
       name: 'Affordable Housing Application',
       description: 'Apply for government-subsidized housing for low-income families',
       category: 'Housing Assistance',
-      eligibility: ['Onelga LGA resident', 'Income below threshold', 'First-time home buyer'],
+  eligibility: ['Onelga LGA resident', 'Income below threshold', 'First-time home buyer'],
       requirements: ['Income verification', 'Employment letter', 'Bank statements', 'Family size documentation'],
       processingTime: '60-90 working days',
       cost: 'Subsidized (30-50% below market rate)',
@@ -268,7 +268,7 @@ const HousingServicesPage: React.FC = () => {
       type: 'First-Time Buyer',
       description: 'Helping first-time home buyers with subsidized mortgage and down payment assistance',
       benefits: ['20% down payment assistance', '5% interest rate subsidy', 'Free legal documentation', 'Property maintenance support'],
-      eligibility: ['First-time home buyer', 'Onelga resident for 2+ years', 'Stable income', 'Age 25-45 years'],
+  eligibility: ['First-time home buyer', 'Onelga resident for 2+ years', 'Stable income', 'Age 25-45 years'],
       applicationDeadline: '2024-12-31',
       availableUnits: 50,
       status: 'Open'
@@ -279,7 +279,7 @@ const HousingServicesPage: React.FC = () => {
       type: 'Senior Citizen',
       description: 'Specialized housing solutions for senior citizens with accessibility features',
       benefits: ['Accessible housing units', 'Healthcare proximity', 'Community support', 'Maintenance included'],
-      eligibility: ['Age 65+ years', 'Onelga resident', 'Limited income', 'Medical needs assessment'],
+  eligibility: ['Age 65+ years', 'Onelga resident', 'Limited income', 'Medical needs assessment'],
       applicationDeadline: '2024-10-15',
       availableUnits: 25,
       status: 'Open'
@@ -290,7 +290,7 @@ const HousingServicesPage: React.FC = () => {
       type: 'Low Income',
       description: 'Affordable housing options for families with limited income',
       benefits: ['Subsidized rent', 'Utilities assistance', 'Maintenance support', 'Community facilities'],
-      eligibility: ['Income below poverty line', 'Family with children', 'Onelga resident', 'Employment verification'],
+  eligibility: ['Income below poverty line', 'Family with children', 'Onelga resident', 'Employment verification'],
       applicationDeadline: '2024-11-30',
       availableUnits: 100,
       status: 'Waitlist'
@@ -301,7 +301,7 @@ const HousingServicesPage: React.FC = () => {
       type: 'Special Needs',
       description: 'Housing units designed for persons with disabilities and special needs',
       benefits: ['Wheelchair accessible', 'Special equipment support', 'Caregiver accommodation', 'Transport assistance'],
-      eligibility: ['Disability certification', 'Medical assessment', 'Onelga resident', 'Support system availability'],
+  eligibility: ['Disability certification', 'Medical assessment', 'Onelga resident', 'Support system availability'],
       applicationDeadline: '2024-09-30',
       availableUnits: 15,
       status: 'Open'
@@ -407,7 +407,12 @@ const HousingServicesPage: React.FC = () => {
       setShowProgramDialog(false);
       resetForm();
     } catch (error) {
-      toast.error('Failed to submit application');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Housing application submission error:', error);
+      }
+      toast.error('Failed to submit application. Please try again or contact support if the problem persists.');
     }
   };
 

@@ -264,7 +264,12 @@ const HealthServicesPage: React.FC = () => {
       setBookingForm({ date: '', time: '', reason: '', healthCenter: '', preferredDoctor: '' });
       setSelectedTab('appointments');
     } catch (error) {
-      toast.error('Failed to book appointment');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Health appointment booking error:', error);
+      }
+      toast.error('Failed to book appointment. Please try again or contact support if the problem persists.');
     }
   };
 

@@ -176,180 +176,101 @@ const GovernmentOfficialDashboardPage: React.FC = () => {
     channels: [] as string[],
   });
 
-  // Load dashboard data
+  // Load dashboard data from real API
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock system metrics
-        setSystemMetrics([
-          {
-            id: '1',
-            title: 'Total Users',
-            value: 15420,
-            unit: 'users',
-            change: 12.5,
-            changeType: 'increase',
-            icon: People,
-            color: '#1976d2'
+        // Fetch system metrics from backend
+        const res = await fetch('/api/admin/dashboard/stats', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          {
-            id: '2',
-            title: 'Active Applications',
-            value: 3847,
-            unit: 'applications',
-            change: 8.3,
-            changeType: 'increase',
-            icon: Assignment,
-            color: '#388e3c'
-          },
-          {
-            id: '3',
-            title: 'System Uptime',
-            value: 99.97,
-            unit: '%',
-            change: 0.02,
-            changeType: 'increase',
-            icon: MonitorHeart,
-            color: '#f57c00'
-          },
-          {
-            id: '4',
-            title: 'Compliance Score',
-            value: 96.8,
-            unit: '%',
-            change: -0.5,
-            changeType: 'decrease',
-            icon: Security,
-            color: '#7b1fa2'
-          },
-          {
-            id: '5',
-            title: 'Processing Time',
-            value: 2.4,
-            unit: 'days',
-            change: -15.2,
-            changeType: 'decrease',
-            icon: Speed,
-            color: '#d32f2f'
-          },
-          {
-            id: '6',
-            title: 'Storage Used',
-            value: 78.5,
-            unit: '%',
-            change: 5.8,
-            changeType: 'increase',
-            icon: Storage,
-            color: '#0288d1'
-          }
-        ]);
-
-        // Mock policy documents
-        setPolicyDocuments([
-          {
-            id: '1',
-            title: 'Digital Identity Verification Policy',
-            type: 'Policy',
-            status: 'Draft',
-            lastUpdated: '2024-01-20',
-            version: '2.1',
-            department: 'IT & Security'
-          },
-          {
-            id: '2',
-            title: 'Service Fee Structure Guidelines',
-            type: 'Guideline',
-            status: 'Published',
-            lastUpdated: '2024-01-15',
-            version: '1.5',
-            department: 'Finance'
-          },
-          {
-            id: '3',
-            title: 'Data Protection Regulation',
-            type: 'Regulation',
-            status: 'Approved',
-            lastUpdated: '2024-01-18',
-            version: '3.0',
-            department: 'Legal & Compliance'
-          }
-        ]);
-
-        // Mock compliance reports
-        setComplianceReports([
-          {
-            id: '1',
-            title: 'Q4 2023 Service Delivery Report',
-            type: 'Quarterly',
-            status: 'Published',
-            generatedDate: '2024-01-05',
-            coveragePeriod: 'Oct-Dec 2023',
-            size: '2.4 MB'
-          },
-          {
-            id: '2',
-            title: 'January 2024 Security Audit',
-            type: 'Monthly',
-            status: 'Approved',
-            generatedDate: '2024-01-22',
-            coveragePeriod: 'January 2024',
-            size: '1.8 MB'
-          },
-          {
-            id: '3',
-            title: 'Annual Performance Assessment 2023',
-            type: 'Annual',
-            status: 'Pending Review',
-            generatedDate: '2024-01-25',
-            coveragePeriod: 'FY 2023',
-            size: '5.2 MB'
-          }
-        ]);
-
-        // Mock audit actions
-        setAuditActions([
-          {
-            id: '1',
-            action: 'Policy Updated',
-            performedBy: 'Sarah Johnson',
-            role: 'Government Official',
-            timestamp: '2024-01-20T14:30:00Z',
-            details: 'Updated Digital Identity Verification Policy v2.1',
-            severity: 'Medium',
-            category: 'Policy Management'
-          },
-          {
-            id: '2',
-            action: 'System Configuration Changed',
-            performedBy: 'Michael Chen',
-            role: 'System Admin',
-            timestamp: '2024-01-20T10:15:00Z',
-            details: 'Modified security timeout settings',
-            severity: 'High',
-            category: 'System Security'
-          },
-          {
-            id: '3',
-            action: 'Bulk Notification Sent',
-            performedBy: 'David Wilson',
-            role: 'Government Official',
-            timestamp: '2024-01-19T16:45:00Z',
-            details: 'Sent system maintenance notification to all users',
-            severity: 'Low',
-            category: 'Communication'
-          }
-        ]);
-
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          const stats = data.data;
+          setSystemMetrics([
+            {
+              id: '1',
+              title: 'Total Users',
+              value: stats.users.total,
+              unit: 'users',
+              change: 0, // Real change can be added if available
+              changeType: 'neutral',
+              icon: People,
+              color: '#1976d2'
+            },
+            {
+              id: '2',
+              title: 'Active Applications',
+              value: stats.applications.total,
+              unit: 'applications',
+              change: 0,
+              changeType: 'neutral',
+              icon: Assignment,
+              color: '#388e3c'
+            },
+            {
+              id: '3',
+              title: 'System Uptime',
+              value: stats.systemHealth.uptime,
+              unit: '%',
+              change: 0,
+              changeType: 'neutral',
+              icon: MonitorHeart,
+              color: '#f57c00'
+            },
+            {
+              id: '4',
+              title: 'System Response Time',
+              value: stats.systemHealth.responseTime,
+              unit: 's',
+              change: 0,
+              changeType: 'neutral',
+              icon: Speed,
+              color: '#d32f2f'
+            },
+            {
+              id: '5',
+              title: 'Active Connections',
+              value: stats.systemHealth.activeConnections,
+              unit: '',
+              change: 0,
+              changeType: 'neutral',
+              icon: Storage,
+              color: '#0288d1'
+            },
+            {
+              id: '6',
+              title: 'Memory Usage',
+              value: stats.systemHealth.memoryUsage,
+              unit: '%',
+              change: 0,
+              changeType: 'neutral',
+              icon: Storage,
+              color: '#7b1fa2'
+            },
+            {
+              id: '7',
+              title: 'CPU Usage',
+              value: stats.systemHealth.cpuUsage,
+              unit: '%',
+              change: 0,
+              changeType: 'neutral',
+              icon: Storage,
+              color: '#b91c1c'
+            }
+          ]);
+        }
+        // TODO: Replace policy documents, compliance reports, and audit actions with real API calls if available
       } catch (error) {
         toast.error('Failed to load dashboard data');
       } finally {
         setLoading(false);
       }
     };
-
     loadDashboardData();
   }, []);
 

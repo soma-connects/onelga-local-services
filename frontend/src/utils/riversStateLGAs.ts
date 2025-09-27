@@ -1,0 +1,46 @@
+// Rivers State LGAs and Wards (ONELGA first)
+export const riversStateLGAs = [
+  {
+    name: 'Ogba/Egbema/Ndoni (ONELGA)',
+    wards: [
+      'Ndoni Ward 1',
+      'Ndoni Ward 2',
+      'Egbema Ward',
+      'Omoku Ward',
+      'Agi Ward',
+      'Obrikom Ward',
+      'Usomini Ward',
+      'Igburu Ward',
+      'Okwuzi Ward',
+      'Egi Ward',
+      'Obosi Ward',
+      'Akabuka Ward',
+      'Osiakpo Ward',
+      'Odugiri Ward',
+      'Okwuizi Ward',
+      'Other (specify)'
+    ]
+  },
+  { name: 'Abua/Odual', wards: ['Abua I', 'Abua II', 'Abua III', 'Odual I', 'Odual II', 'Other (specify)'] },
+  { name: 'Ahoada East', wards: ['Ahoada I', 'Ahoada II', 'Ahoada III', 'Other (specify)'] },
+  { name: 'Ahoada West', wards: ['Ahoada West I', 'Ahoada West II', 'Other (specify)'] },
+  { name: 'Akuku-Toru', wards: ['Akuku-Toru I', 'Akuku-Toru II', 'Akuku-Toru III', 'Other (specify)'] },
+  { name: 'Andoni', wards: ['Andoni I', 'Andoni II', 'Andoni III', 'Other (specify)'] },
+  { name: 'Asari-Toru', wards: ['Asari-Toru I', 'Asari-Toru II', 'Asari-Toru III', 'Other (specify)'] },
+  { name: 'Bonny', wards: ['Bonny I', 'Bonny II', 'Bonny III', 'Other (specify)'] },
+  { name: 'Degema', wards: ['Degema I', 'Degema II', 'Degema III', 'Other (specify)'] },
+  { name: 'Eleme', wards: ['Eleme I', 'Eleme II', 'Other (specify)'] },
+  { name: 'Emohua', wards: ['Emohua I', 'Emohua II', 'Other (specify)'] },
+  { name: 'Etche', wards: ['Etche I', 'Etche II', 'Other (specify)'] },
+  { name: 'Gokana', wards: ['Gokana I', 'Gokana II', 'Other (specify)'] },
+  { name: 'Ikwerre', wards: ['Ikwerre I', 'Ikwerre II', 'Other (specify)'] },
+  { name: 'Khana', wards: ['Khana I', 'Khana II', 'Khana III', 'Other (specify)'] },
+  { name: 'Obio/Akpor', wards: ['Obio/Akpor I', 'Obio/Akpor II', 'Obio/Akpor III', 'Other (specify)'] },
+  { name: 'Ogu/Bolo', wards: ['Ogu/Bolo I', 'Ogu/Bolo II', 'Other (specify)'] },
+  { name: 'Okrika', wards: ['Okrika I', 'Okrika II', 'Other (specify)'] },
+  { name: 'Omuma', wards: ['Omuma I', 'Omuma II', 'Other (specify)'] },
+  { name: 'Opobo/Nkoro', wards: ['Opobo/Nkoro I', 'Opobo/Nkoro II', 'Other (specify)'] },
+  { name: 'Oyigbo', wards: ['Oyigbo I', 'Oyigbo II', 'Other (specify)'] },
+  { name: 'Port Harcourt', wards: ['Port Harcourt I', 'Port Harcourt II', 'Port Harcourt III', 'Other (specify)'] },
+  { name: 'Tai', wards: ['Tai I', 'Tai II', 'Other (specify)'] }
+];

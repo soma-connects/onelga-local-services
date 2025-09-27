@@ -30,6 +30,20 @@ onelga-local-services/
 - **Education Services** - School registration and scholarship applications
 - **Housing/Land Services** - Property registration and tax payments
 
+
+## ♿ Accessibility
+
+This project is committed to providing an accessible experience for all users, including those with disabilities. Key accessibility features include:
+
+- Use of ARIA roles and attributes (e.g., `aria-label`, `role`, `aria-live`) for screen reader support.
+- Semantic HTML and Material-UI components for better keyboard and assistive technology compatibility.
+- Visible focus indicators and keyboard navigation for all interactive elements.
+- Sufficient color contrast and support for high-contrast modes.
+- Accessible form labels and error messages.
+- Regular accessibility testing using `@testing-library/react` and `jest-axe`.
+
+We follow [WCAG 2.1 AA](https://www.w3.org/WAI/standards-guidelines/wcag/) guidelines and best practices for web accessibility.
+
 ## 🛠️ Technology Stack
 
 ### Frontend (Web)

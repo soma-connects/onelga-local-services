@@ -77,129 +77,28 @@ const ServicesPage: React.FC = () => {
     { value: 'birth-registration', label: 'Birth Registration', count: 0 },
   ];
 
-  // Mock services data
+  // Fetch real services data from backend
   useEffect(() => {
     const loadServices = async () => {
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
-
-        const mockServices: Service[] = [
-          {
-            id: '1',
-            name: 'Identification Letter',
-            description: 'Official identification letter for residents of Onelga Local Government Area',
-            category: 'identification',
-            processingTime: '3-5 business days',
-            requirements: ['Valid ID', 'Proof of residence', 'Passport photograph'],
-            fee: 2000,
-            isPopular: true,
-            status: 'available',
-            icon: IdentificationIcon,
-            applicationPath: '/services/identification'
-          },
-          {
-            id: '2',
-            name: 'Birth Certificate',
-            description: 'Register birth and obtain certified birth certificate',
-            category: 'birth-registration',
-            processingTime: '7-14 business days',
-            requirements: ['Hospital birth record', 'Parents\' ID', 'Marriage certificate'],
-            fee: 3500,
-            isPopular: true,
-            status: 'available',
-            icon: BirthIcon,
-            applicationPath: '/services/birth-certificate'
-          },
-          {
-            id: '3',
-            name: 'Health Facility Registration',
-            description: 'Register health facilities and get operating permits',
-            category: 'health',
-            processingTime: '14-21 business days',
-            requirements: ['Medical qualifications', 'Facility inspection', 'Equipment list'],
-            fee: 15000,
-            isPopular: false,
-            status: 'available',
-            icon: HealthIcon,
-            applicationPath: '/services/health'
-          },
-          {
-            id: '4',
-            name: 'Business Registration',
-            description: 'Register your business and obtain trading license',
-            category: 'business',
-            processingTime: '5-10 business days',
-            requirements: ['Business plan', 'Tax identification', 'Location permit'],
-            fee: 8000,
-            isPopular: true,
-            status: 'available',
-            icon: BusinessIcon,
-            applicationPath: '/services/business'
-          },
-          {
-            id: '5',
-            name: 'Vehicle Registration',
-            description: 'Register vehicles and obtain permits for commercial operations',
-            category: 'transport',
-            processingTime: '3-7 business days',
-            requirements: ['Vehicle documents', 'Insurance', 'Safety inspection'],
-            fee: 12000,
-            isPopular: false,
-            status: 'available',
-            icon: TransportIcon,
-            applicationPath: '/services/transport'
-          },
-          {
-            id: '6',
-            name: 'School Registration',
-            description: 'Register educational institutions and get accreditation',
-            category: 'education',
-            processingTime: '21-30 business days',
-            requirements: ['Educational license', 'Facility assessment', 'Staff qualifications'],
-            fee: 25000,
-            isPopular: false,
-            status: 'temporarily_unavailable',
-            icon: EducationIcon,
-            applicationPath: '/services/education'
-          },
-          {
-            id: '7',
-            name: 'Land Title Registration',
-            description: 'Register land ownership and obtain certificate of occupancy',
-            category: 'housing',
-            processingTime: '30-45 business days',
-            requirements: ['Survey plan', 'Purchase agreement', 'Tax clearance'],
-            fee: 45000,
-            isPopular: false,
-            status: 'available',
-            icon: HousingIcon,
-            applicationPath: '/services/housing'
-          },
-          {
-            id: '8',
-            name: 'Social Welfare Services',
-            description: 'Access social welfare programs and submit community complaints',
-            category: 'social-security',
-            processingTime: '1-3 business days',
-            requirements: ['Valid ID', 'Income proof', 'Community reference'],
-            fee: 0,
-            isPopular: false,
-            status: 'coming_soon',
-            icon: ComplaintIcon,
-            applicationPath: '/services/social-security'
-          }
-        ];
-
-        setServices(mockServices);
-        setFilteredServices(mockServices);
+        const response = await fetch('/api/services', {
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const result = await response.json();
+        if (result.success && result.data && result.data.services) {
+          // Optionally map icons if needed
+          setServices(result.data.services);
+          setFilteredServices(result.data.services);
+        } else {
+          toast.error(result.message || 'Failed to load services');
+        }
       } catch (error) {
         toast.error('Failed to load services');
       } finally {
         setLoading(false);
       }
     };
-
     loadServices();
   }, []);
 

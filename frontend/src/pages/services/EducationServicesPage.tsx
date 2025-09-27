@@ -137,13 +137,13 @@ const EducationServicesPage: React.FC = () => {
     studentName: '',
     guardianName: '',
     dateOfBirth: '',
-    address: '',
-    phone: '',
-    email: '',
-    level: '',
-    previousSchool: '',
-    reason: '',
-    additionalInfo: ''
+  address: '',
+  phone: '',
+  email: '',
+  level: '',
+  previousSchool: '',
+  reason: '',
+  additionalInfo: ''
   });
 
   // Mock education services data
@@ -153,7 +153,7 @@ const EducationServicesPage: React.FC = () => {
       name: 'Primary School Enrollment',
       description: 'Register children for primary education in Onelga LGA public schools',
       category: 'School Enrollment',
-      eligibility: ['Age 6-12 years', 'Resident of Onelga LGA', 'Birth certificate required'],
+  eligibility: ['Age 6-12 years', 'Resident of Onelga LGA', 'Birth certificate required'],
       requirements: ['Birth certificate', 'Immunization record', 'Passport photograph', 'Proof of residence'],
       cost: 'Free',
       duration: 'Academic year',
@@ -166,7 +166,7 @@ const EducationServicesPage: React.FC = () => {
       name: 'Secondary School Enrollment',
       description: 'Admission into public secondary schools within Onelga LGA',
       category: 'School Enrollment',
-      eligibility: ['Primary school certificate', 'Age 12-16 years', 'Entrance examination'],
+  eligibility: ['Primary school certificate', 'Age 12-16 years', 'Entrance examination'],
       requirements: ['Primary school certificate', 'Birth certificate', 'Medical certificate', '2 passport photos'],
       cost: '₦5,000 registration fee',
       duration: '6 years',
@@ -180,7 +180,7 @@ const EducationServicesPage: React.FC = () => {
       name: 'Adult Literacy Program',
       description: 'Basic literacy and numeracy classes for adults who missed formal education',
       category: 'Adult Education',
-      eligibility: ['Adults 18+ years', 'Basic English/local language', 'Commitment to attend classes'],
+  eligibility: ['Adults 18+ years', 'Basic English/local language', 'Commitment to attend classes'],
       requirements: ['Valid ID', 'Proof of residence', 'Application form'],
       cost: 'Free',
       duration: '6 months',
@@ -193,7 +193,7 @@ const EducationServicesPage: React.FC = () => {
       name: 'Vocational Training Program',
       description: 'Technical and vocational skills training in various trades',
       category: 'Programs',
-      eligibility: ['Age 16+ years', 'Basic education', 'Interest in technical skills'],
+  eligibility: ['Age 16+ years', 'Basic education', 'Interest in technical skills'],
       requirements: ['Educational certificate', 'Medical certificate', 'Application form'],
       cost: '₦15,000',
       duration: '1-2 years',
@@ -206,7 +206,7 @@ const EducationServicesPage: React.FC = () => {
       name: 'Special Needs Education',
       description: 'Specialized education services for children with special needs',
       category: 'Support',
-      eligibility: ['Children with disabilities', 'Medical assessment', 'Age 3-18 years'],
+  eligibility: ['Children with disabilities', 'Medical assessment', 'Age 3-18 years'],
       requirements: ['Medical report', 'Birth certificate', 'Assessment by specialist'],
       cost: 'Subsidized',
       duration: 'As needed',
@@ -384,7 +384,12 @@ const EducationServicesPage: React.FC = () => {
       setShowScholarshipDialog(false);
       resetForm();
     } catch (error) {
-      toast.error('Failed to submit application');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Education application submission error:', error);
+      }
+      toast.error('Failed to submit application. Please try again or contact support if the problem persists.');
     }
   };
 

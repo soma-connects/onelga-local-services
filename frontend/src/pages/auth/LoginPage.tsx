@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Container,
   Paper,
@@ -45,6 +46,7 @@ interface FormErrors {
 }
 
 const LoginPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
@@ -202,12 +204,12 @@ const LoginPage: React.FC = () => {
             {/* Email Field */}
             <TextField
               fullWidth
-              label="Email Address"
+              label={t('Email Address')}
               type="email"
               value={formData.email}
               onChange={handleInputChange('email')}
               error={!!errors.email}
-              helperText={errors.email || 'Enter your registered email address'}
+              helperText={errors.email || t('Enter your registered email address')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -222,12 +224,12 @@ const LoginPage: React.FC = () => {
             {/* Password Field */}
             <TextField
               fullWidth
-              label="Password"
+              label={t('Password')}
               type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleInputChange('password')}
               error={!!errors.password}
-              helperText={errors.password || 'Enter your secure password'}
+              helperText={errors.password || t('Enter your secure password')}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -239,7 +241,7 @@ const LoginPage: React.FC = () => {
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
-                      aria-label="toggle password visibility"
+                      aria-label={t('toggle password visibility')}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -259,7 +261,7 @@ const LoginPage: React.FC = () => {
                     color="primary"
                   />
                 }
-                label="Remember me"
+                label={t('Remember me')}
               />
               <Link
                 component={RouterLink}
@@ -267,7 +269,7 @@ const LoginPage: React.FC = () => {
                 variant="body2"
                 sx={{ textDecoration: 'none' }}
               >
-                Forgot password?
+                {t('Forgot Password?')}
               </Link>
             </Box>
 
@@ -281,7 +283,7 @@ const LoginPage: React.FC = () => {
               startIcon={isLoading ? <CircularProgress size={20} /> : <AccountCircle />}
               sx={{ py: 1.5, fontSize: '1.1rem' }}
             >
-              {isLoading ? 'Signing In...' : 'Sign In to Portal'}
+              {isLoading ? t('Signing In...') : t('Sign In to Portal')}
             </Button>
           </Stack>
         </form>
@@ -291,7 +293,7 @@ const LoginPage: React.FC = () => {
         {/* Register Link */}
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Don't have an account?{' '}
+            {t("Don't have an account?")}{' '}
             <Link
               component={RouterLink}
               to="/register"
@@ -299,7 +301,7 @@ const LoginPage: React.FC = () => {
               fontWeight="bold"
               sx={{ textDecoration: 'none' }}
             >
-              Register as Citizen
+              {t('Register as Citizen')}
             </Link>
           </Typography>
         </Box>
@@ -308,11 +310,11 @@ const LoginPage: React.FC = () => {
         <Card sx={{ mt: 3, bgcolor: 'grey.50' }}>
           <CardContent sx={{ py: 2 }}>
             <Typography variant="body2" fontWeight="bold" gutterBottom>
-              Demo Credentials:
+              {t('Demo Credentials:')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              <strong>Admin:</strong> admin@onelga.gov.ng / admin123<br />
-              <strong>Citizen:</strong> citizen@example.com / password123
+              <strong>{t('Admin')}:</strong> admin@onelga.gov.ng / admin123<br />
+              <strong>{t('Citizen')}:</strong> citizen@example.com / password123
             </Typography>
           </CardContent>
         </Card>
@@ -321,16 +323,16 @@ const LoginPage: React.FC = () => {
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
             <Link href="#" variant="caption" color="text.secondary">
-              Privacy Policy
+              {t('Privacy Policy')}
             </Link>
             <Link href="#" variant="caption" color="text.secondary">
-              Terms of Service
+              {t('Terms of Service')}
             </Link>
             <Link href="#" variant="caption" color="text.secondary">
-              Help & Support
+              {t('Help & Support')}
             </Link>
             <Link href="#" variant="caption" color="text.secondary">
-              Contact Us
+              {t('Contact Us')}
             </Link>
           </Stack>
         </Box>

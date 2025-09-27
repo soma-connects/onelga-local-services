@@ -161,71 +161,75 @@ const DashboardPage: React.FC = () => {
     },
   ];
 
-  // Load dashboard data
+  // Load dashboard data from real API
   useEffect(() => {
     const loadDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Mock data - replace with actual API calls
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-        
-        setStats({
-          totalApplications: 12,
-          pendingApplications: 3,
-          approvedApplications: 7,
-          completedApplications: 2,
-          recentActivity: 5,
+        // Fetch stats
+        const statsRes = await fetch('/api/profile/stats', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
         });
+        const statsData = await statsRes.json();
+        if (statsData.success && statsData.data && statsData.data.applications) {
+          setStats({
+            totalApplications: statsData.data.applications.total,
+            pendingApplications: statsData.data.applications.pending,
+            approvedApplications: statsData.data.applications.approved,
+            completedApplications: statsData.data.applications.completed || 0,
+            recentActivity: statsData.data.recentActivities || 0,
+          });
+        }
 
-        setRecentApplications([
-          {
-            id: '1',
-            serviceName: 'Identification Letter',
-            status: 'APPROVED',
-            submittedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            serviceType: 'identification',
+        // Fetch recent applications
+        const appsRes = await fetch('/api/applications', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          {
-            id: '2',
-            serviceName: 'Birth Certificate',
-            status: 'PENDING',
-            submittedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            serviceType: 'birth-certificate',
-          },
-          {
-            id: '3',
-            serviceName: 'Health Appointment',
-            status: 'COMPLETED',
-            submittedDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-            serviceType: 'health',
-          },
-        ]);
+        });
+        const appsData = await appsRes.json();
+        if (appsData.success && appsData.data && appsData.data.applications) {
+          setRecentApplications(
+            appsData.data.applications.slice(0, 3).map((app: any) => ({
+              id: app.id,
+              serviceName: app.type,
+              status: app.status,
+              submittedDate: app.createdAt,
+              serviceType: app.type,
+            }))
+          );
+        }
 
-        setNotifications([
-          {
-            id: '1',
-            title: 'Application Approved',
-            message: 'Your identification letter application has been approved!',
-            type: 'success',
-            timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-            isRead: false,
+        // Fetch notifications
+        const notifRes = await fetch('/api/profile/notifications', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          {
-            id: '2',
-            title: 'Document Required',
-            message: 'Please upload additional documents for your birth certificate application.',
-            type: 'warning',
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-            isRead: false,
-          },
-        ]);
+        });
+        const notifData = await notifRes.json();
+        if (notifData.success && notifData.data && notifData.data.notifications) {
+          setNotifications(
+            notifData.data.notifications.map((n: any) => ({
+              id: n.id,
+              title: n.title,
+              message: n.message,
+              type: n.type || 'info',
+              timestamp: n.createdAt,
+              isRead: n.isRead,
+            }))
+          );
+        }
       } catch (error) {
         toast.error('Failed to load dashboard data');
       } finally {
         setIsLoading(false);
       }
     };
-
     loadDashboardData();
   }, []);
 
@@ -545,7 +549,7 @@ const DashboardPage: React.FC = () => {
               
               {notifications.length > 3 && (
                 <Box sx={{ mt: 2, textAlign: 'center' }}>
-                  <Button size="small" onClick={() => toast('Notifications page coming soon!')}>
+                  <Button size="small" onClick={() => navigate('/notifications')}>
                     View All Notifications
                   </Button>
                 </Box>

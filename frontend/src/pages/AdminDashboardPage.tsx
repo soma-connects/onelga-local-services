@@ -119,125 +119,49 @@ const AdminDashboardPage: React.FC = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewAction, setReviewAction] = useState<'APPROVE' | 'REJECT' | 'REQUEST_DOCUMENTS'>('APPROVE');
 
-  // Mock admin applications data
+  // Fetch real admin applications data
   useEffect(() => {
     const loadAdminApplications = async () => {
       setLoading(true);
       try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        const mockApplications: AdminApplication[] = [
-          {
-            id: '1',
-            applicantName: 'John Doe',
-            applicantEmail: 'john@example.com',
-            serviceName: 'Identification Letter',
-            serviceType: 'identification',
-            applicationNumber: 'OLG-ID-2024-001',
-            status: 'SUBMITTED',
-            submittedDate: '2024-01-20T10:30:00Z',
-            lastUpdated: '2024-01-20T10:30:00Z',
-            priority: 'MEDIUM',
-            assignedTo: 'Admin User',
-            fee: 2000,
-            paymentStatus: 'PAID',
-            documents: ['ID Copy', 'Proof of Residence', 'Passport Photo'],
-            comments: [
-              {
-                id: '1',
-                author: 'System',
-                content: 'Application submitted successfully',
-                timestamp: '2024-01-20T10:30:00Z',
-                isInternal: true,
-              }
-            ],
+        // You may want to add pagination, filters, etc.
+        const response = await fetch('/api/admin/applications', {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
-          {
-            id: '2',
-            applicantName: 'Jane Smith',
-            applicantEmail: 'jane@example.com',
-            serviceName: 'Birth Certificate',
-            serviceType: 'birth-certificate',
-            applicationNumber: 'OLG-BC-2024-002',
-            status: 'UNDER_REVIEW',
-            submittedDate: '2024-01-18T15:20:00Z',
-            lastUpdated: '2024-01-19T09:15:00Z',
-            priority: 'HIGH',
-            assignedTo: 'Admin User',
-            fee: 3500,
-            paymentStatus: 'PAID',
-            documents: ['Hospital Birth Record', 'Parents ID'],
-            comments: [
-              {
-                id: '1',
-                author: 'Admin User',
-                content: 'Documents received and under review',
-                timestamp: '2024-01-19T09:15:00Z',
-                isInternal: true,
-              }
-            ],
-          },
-          {
-            id: '3',
-            applicantName: 'Michael Johnson',
-            applicantEmail: 'michael@example.com',
-            serviceName: 'Business Registration',
-            serviceType: 'business',
-            applicationNumber: 'OLG-BIZ-2024-003',
-            status: 'PENDING_DOCUMENTS',
-            submittedDate: '2024-01-15T08:45:00Z',
-            lastUpdated: '2024-01-16T14:20:00Z',
-            priority: 'URGENT',
-            assignedTo: 'Senior Admin',
-            fee: 8000,
-            paymentStatus: 'PAID',
-            documents: ['Business Plan', 'Tax ID'],
-            comments: [
-              {
-                id: '1',
-                author: 'Senior Admin',
-                content: 'Additional documentation required: Location permit missing',
-                timestamp: '2024-01-16T14:20:00Z',
-                isInternal: false,
-              }
-            ],
-          },
-          {
-            id: '4',
-            applicantName: 'Sarah Williams',
-            applicantEmail: 'sarah@example.com',
-            serviceName: 'Vehicle Registration',
-            serviceType: 'transport',
-            applicationNumber: 'OLG-VEH-2024-004',
-            status: 'APPROVED',
-            submittedDate: '2024-01-12T12:15:00Z',
-            lastUpdated: '2024-01-19T16:30:00Z',
-            priority: 'LOW',
-            assignedTo: 'Admin User',
-            fee: 12000,
-            paymentStatus: 'PAID',
-            documents: ['Vehicle Documents', 'Insurance', 'Safety Inspection'],
-            comments: [
-              {
-                id: '1',
-                author: 'Admin User',
-                content: 'All documents verified. Application approved.',
-                timestamp: '2024-01-19T16:30:00Z',
-                isInternal: true,
-              }
-            ],
-          },
-        ];
-
-        setApplications(mockApplications);
-        setFilteredApplications(mockApplications);
+        });
+        const result = await response.json();
+        if (result.success) {
+          // Map backend data to AdminApplication[] if needed
+          const apps = result.data.applications.map((app: any) => ({
+            id: app.id,
+            applicantName: app.user ? `${app.user.firstName} ${app.user.lastName}` : 'N/A',
+            applicantEmail: app.user ? app.user.email : 'N/A',
+            serviceName: app.type,
+            serviceType: app.type,
+            applicationNumber: app.id,
+            status: app.status,
+            submittedDate: app.createdAt,
+            lastUpdated: app.updatedAt,
+            priority: app.priority || 'MEDIUM',
+            assignedTo: app.assignedTo || '',
+            fee: app.fee || 0,
+            paymentStatus: app.paymentStatus || 'PENDING',
+            documents: app.documents || [],
+            comments: app.comments || [],
+          }));
+          setApplications(apps);
+          setFilteredApplications(apps);
+        } else {
+          toast.error(result.message || 'Failed to load applications');
+        }
       } catch (error) {
         toast.error('Failed to load applications');
       } finally {
         setLoading(false);
       }
     };
-
     loadAdminApplications();
   }, []);
 

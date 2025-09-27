@@ -13,6 +13,42 @@ router.use(requireRole(['ADMIN']));
 // Dashboard Statistics
 router.get('/dashboard/stats', adminController.getDashboardStats.bind(adminController));
 
+// Admin: Get all applications
+router.get('/applications', async (req, res) => {
+  try {
+    // Only admins can access (middleware already applied)
+    const { page = 1, limit = 20, status, priority, serviceType, search } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const where = {};
+    if (status) where.status = status;
+    if (priority) where.priority = priority;
+    if (serviceType) where.type = serviceType;
+    // Optionally add search by applicant name/email
+    // This assumes Application has a relation to User
+    // For simplicity, not adding search here; can be extended
+
+    const [applications, total] = await Promise.all([
+      req.app.locals.prisma.application.findMany({
+        skip,
+        take: Number(limit),
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true } },
+        },
+        where,
+      }),
+      req.app.locals.prisma.application.count({ where }),
+    ]);
+
+    res.json({
+      success: true,
+      data: { applications, total, page: Number(page), limit: Number(limit) },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch applications', error: error.message });
+  }
+});
+
 // User Management Routes
 router.get('/users', 
   [

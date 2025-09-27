@@ -32,8 +32,10 @@ export interface JWTPayload {
 }
 
 // Extended Request interface with user
-export interface AuthRequest extends Request {
+export interface AuthRequest<T = any, P = any> extends Request {
   user?: User;
+  body: T;
+  params: P;
 }
 
 // Authentication response interface

@@ -456,12 +456,11 @@ const LocalIdentificationPage: React.FC = () => {
                 onChange={(e) => handleInputChange('lga', e.target.value)}
                 required
               >
-                {lgas.map((lga) => (
-                  <MenuItem key={lga} value={lga}>{lga}</MenuItem>
+                {riversStateLGAs.map((lga) => (
+                  <MenuItem key={lga.name} value={lga.name}>{lga.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
-            
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -472,7 +471,7 @@ const LocalIdentificationPage: React.FC = () => {
                 required
                 disabled={!formData.lga}
               >
-                {formData.lga && wards[formData.lga as keyof typeof wards]?.map((ward) => (
+                {(riversStateLGAs.find(lga => lga.name === formData.lga)?.wards || []).map((ward) => (
                   <MenuItem key={ward} value={ward}>{ward}</MenuItem>
                 ))}
               </TextField>

@@ -40,43 +40,32 @@ import {
   InputAdornment,
   CircularProgress,
   Badge,
-} from '@mui/material';
-import {
-  AccountCircle,
-  Security,
-  Notifications,
-  Palette,
-  Lock as Privacy,
-  Storage,
-  Info,
-  Edit,
-  Visibility,
-  VisibilityOff,
-  Key,
-  Shield,
-  Phone,
-  Email,
-  Download,
-  Warning,
-  CheckCircle,
-  Error,
-  AccessTime,
-  Brightness4,
-  DarkMode,
-  LightMode,
-  VolumeUp,
-  VolumeOff,
-  CloudDownload,
-  DataUsage,
-  Archive,
-  PersonRemove,
-  VerifiedUser,
-} from '@mui/icons-material';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../store';
-import { logout } from '../store/slices/authSlice';
-import { useSettings } from '../contexts/SettingsContext';
-import { settingsService } from '../services/settingsApi';
+  return (
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Settings
+        </Typography>
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ mb: 3 }}
+        >
+          {SETTINGS_SECTIONS.map((section, idx) => (
+            <Tab key={section.label} label={section.label} />
+          ))}
+        </Tabs>
+        <Box>
+          {SETTINGS_SECTIONS[activeTab].component}
+        </Box>
+      </Paper>
+    </Container>
+  );
+};
+
+export default SettingsPage;
 
 // Interfaces
 interface TabPanelProps {
@@ -1077,9 +1066,9 @@ const SettingsPage: React.FC = () => {
           {/* Appearance Tab */}
           <TabPanel value={activeTab} index={4}>
             <Grid container spacing={3}>
-              {/* Theme Settings */}
+              {/* Theme and Display Settings: stack vertically on xs/sm screens */}
               <Grid item xs={12} md={6}>
-                <Card>
+                <Card sx={{ mb: { xs: 2, md: 0 } }}>
                   <CardHeader title="Theme" />
                   <CardContent>
                     <FormControl component="fieldset">
@@ -1089,6 +1078,7 @@ const SettingsPage: React.FC = () => {
                         onChange={(e) => {
                           updateUserSettings({ theme: e.target.value as any });
                         }}
+                        row={window.innerWidth >= 600 ? true : false}
                       >
                         <FormControlLabel
                           value="light"
@@ -1126,7 +1116,6 @@ const SettingsPage: React.FC = () => {
                 </Card>
               </Grid>
 
-              {/* Display Settings */}
               <Grid item xs={12} md={6}>
                 <Card>
                   <CardHeader title="Display" />

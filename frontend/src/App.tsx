@@ -24,6 +24,7 @@ import ModernOfficialDashboard from './pages/ModernOfficialDashboard';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import NotificationsPage from './pages/NotificationsPage';
 
 // Services Pages
 import IdentificationPage from './pages/services/IdentificationPage';
@@ -102,6 +103,11 @@ function AppContent() {
           <Route path="/settings" element={
             <ProtectedRoute>
               <SettingsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <NotificationsPage />
             </ProtectedRoute>
           } />
           

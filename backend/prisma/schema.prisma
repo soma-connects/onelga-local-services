@@ -231,6 +231,7 @@ model Application {
   userId    String
   user      User      @relation(fields: [userId], references: [id])
   type      String    // IDENTIFICATION_LETTER, BIRTH_CERTIFICATE, etc.
+  referenceNumber String @unique
   status    String    @default("PENDING")
   data      String?   // JSON string for flexible data storage
   createdAt DateTime  @default(now())

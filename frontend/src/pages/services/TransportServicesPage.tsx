@@ -187,8 +187,7 @@ const TransportServicesPage: React.FC = () => {
     phoneNumber: '',
     email: '',
     address: '',
-    stateOfOrigin: '',
-    lgaOfOrigin: '',
+  stateOfOrigin: '',
     occupation: '',
     employerAddress: '',
     
@@ -500,7 +499,12 @@ const TransportServicesPage: React.FC = () => {
       setApplicationStep(0);
       resetApplicationForm();
     } catch (error) {
-      toast.error('Failed to submit application');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Transport application submission error:', error);
+      }
+      toast.error('Failed to submit application. Please try again or contact support if the problem persists.');
     }
   };
 

@@ -174,8 +174,7 @@ const SocialSecurityPage: React.FC = () => {
     phoneNumber: '',
     email: '',
     address: '',
-    stateOfOrigin: '',
-    lgaOfOrigin: '',
+  stateOfOrigin: '',
     
     // Household Information
     householdSize: '',
@@ -550,7 +549,12 @@ const SocialSecurityPage: React.FC = () => {
       setApplicationStep(0);
       resetApplicationForm();
     } catch (error) {
-      toast.error('Failed to submit application');
+      if (process.env.NODE_ENV === 'development') {
+        // Log error details in development for debugging
+        // eslint-disable-next-line no-console
+        console.error('Social Security application submission error:', error);
+      }
+      toast.error('Failed to submit application. Please try again or contact support if the problem persists.');
     }
   };
 

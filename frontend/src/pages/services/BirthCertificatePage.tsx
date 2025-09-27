@@ -250,7 +250,7 @@ const BirthCertificatePage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, placeOfBirth: e.target.value })}
                   error={!!errors.placeOfBirth}
                   helperText={errors.placeOfBirth}
-                  placeholder="e.g., General Hospital, Onelga"
+                  placeholder="e.g., General Hospital, Port Harcourt, Rivers State, Nigeria"
                 />
               </Grid>
             </Grid>
