@@ -1,0 +1,65 @@
+{
+  "name": "onelga-local-services",
+  "version": "1.0.0",
+  "description": "Onelga Comprehensive Local Services Web and Mobile Application - A centralized platform for accessing essential local government services",
+  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm run start --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=backend",
+    "test": "npm test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "install:all": "npm install && npm install --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules"
+  },
+  "keywords": [
+    "local-government",
+    "services",
+    "onelga",
+    "react",
+    "nodejs",
+    "flutter",
+    "government-digitization"
+  ],
+  "author": "Onelga Local Government Development Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "ajv": "^8.17.1",
+    "ajv-keywords": "^5.1.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onelga-gov/local-services-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/onelga-gov/local-services-app/issues"
+  },
+  "homepage": "https://github.com/onelga-gov/local-services-app#readme"
+}

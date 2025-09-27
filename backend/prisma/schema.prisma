@@ -1,0 +1,445 @@
+// Simplified SQLite-compatible Prisma schema
+// This version removes arrays, JSON fields, and enums that SQLite doesn't support
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and profile management
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  firstName   String
+  lastName    String
+  password    String
+  phoneNumber String?
+  dateOfBirth DateTime?
+  address     String?
+  profilePicture String?
+  role        String   @default("CITIZEN") // CITIZEN, ADMIN, STAFF
+  status      String   @default("ACTIVE") // ACTIVE, SUSPENDED, INACTIVE
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  lastLogin   DateTime?
+  failedLoginAttempts Int      @default(0)
+  lockoutUntil        DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  identificationLetters IdentificationLetter[]
+  birthCertificates     BirthCertificate[]
+  healthAppointments    HealthAppointment[]
+  businessRegistrations BusinessRegistration[]
+  vehicleRegistrations  VehicleRegistration[]
+  complaints            Complaint[]
+  educationApplications EducationApplication[]
+  housingApplications   HousingApplication[]
+  applications          Application[]
+  notifications         Notification[]
+  documents             Document[]
+  serviceAssignments    ServiceAssignment[]
+  staffActions          StaffAction[]         @relation("StaffActionsByUser")
+  refreshTokens         RefreshToken[]
+  passwordResetTokens   PasswordResetToken[]
+  userSettings          UserSettings?
+  notificationSettings  NotificationSettings?
+  privacySettings       PrivacySettings?
+  securitySettings      SecuritySettings?
+  auditLogs            AuditLog[]
+
+  @@map("users")
+}
+
+// Identification Letter Service
+model IdentificationLetter {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  status        String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
+  purpose       String
+  documents     String?   // JSON string of document URLs
+  issuedDate    DateTime?
+  expiryDate    DateTime?
+  letterNumber  String?   @unique
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("identification_letters")
+}
+
+// Birth Certificate Service
+model BirthCertificate {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  status           String    @default("PENDING")
+  childFirstName   String
+  childLastName    String
+  childDateOfBirth DateTime
+  placeOfBirth     String
+  fatherName       String
+  motherName       String
+  documents        String?   // JSON string of document URLs
+  certificateNumber String?  @unique
+  issuedDate       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("birth_certificates")
+}
+
+// Health Services
+model HealthCenter {
+  id          String @id @default(cuid())
+  name        String
+  address     String
+  phoneNumber String
+  services    String? // JSON string of services
+  isActive    Boolean @default(true)
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  appointments HealthAppointment[]
+
+  @@map("health_centers")
+}
+
+model HealthAppointment {
+  id             String       @id @default(cuid())
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  healthCenterId String
+  healthCenter   HealthCenter @relation(fields: [healthCenterId], references: [id])
+  appointmentDate DateTime
+  serviceType    String
+  status         String       @default("SCHEDULED") // SCHEDULED, CONFIRMED, COMPLETED, CANCELLED
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("health_appointments")
+}
+
+// Business Services
+model BusinessRegistration {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  businessName    String
+  businessType    String
+  businessAddress String
+  status          String    @default("PENDING")
+  documents       String?   // JSON string of document URLs
+  registrationNumber String? @unique
+  issuedDate      DateTime?
+  expiryDate      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("business_registrations")
+}
+
+// Transport Services
+model VehicleRegistration {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+  vehicleType    String
+  vehicleMake    String
+  vehicleModel   String
+  vehicleYear    Int
+  plateNumber    String?   @unique
+  status         String    @default("PENDING")
+  documents      String?   // JSON string of document URLs
+  registrationDate DateTime?
+  expiryDate     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("vehicle_registrations")
+}
+
+// Social Security & Complaints
+model Complaint {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  title       String
+  description String
+  category    String    // INFRASTRUCTURE, PUBLIC_HEALTH, SECURITY, etc.
+  status      String    @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, IN_PROGRESS, RESOLVED
+  priority    String    @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  attachments String?   // JSON string of attachment URLs
+  response    String?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("complaints")
+}
+
+// Education Services
+model EducationApplication {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  applicationType  String    // scholarship, school_registration
+  schoolName       String?
+  scholarshipType  String?
+  academicLevel    String?
+  status           String    @default("PENDING")
+  documents        String?   // JSON string of document URLs
+  approvedAmount   Float?
+  approvedDate     DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@map("education_applications")
+}
+
+// Housing & Land Services
+model HousingApplication {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  applicationType String  // public_housing, land_registration, property_tax
+  propertyAddress String?
+  propertyType  String?
+  landArea      Float?
+  status        String    @default("PENDING")
+  documents     String?   // JSON string of document URLs
+  approvedDate  DateTime?
+  taxAmount     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("housing_applications")
+}
+
+// Application model (base for all service applications)
+model Application {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  type      String    // IDENTIFICATION_LETTER, BIRTH_CERTIFICATE, etc.
+  status    String    @default("PENDING")
+  data      String?   // JSON string for flexible data storage
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  payments      Payment[]
+  notifications Notification[]
+  documents     Document[]
+  staffActions  StaffAction[]  @relation("ActionsOnApplication")
+
+  @@map("applications")
+}
+
+// Document model for file uploads
+model Document {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  name          String    // Original filename
+  mimeType      String
+  sizeBytes     Int
+  storagePath   String    // Local path or S3 key
+  uploadedBy    String
+  uploadedAt    DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("documents")
+}
+
+model Payment {
+  id               String    @id @default(cuid())
+  reference        String    @unique
+  gatewayReference String?
+  amount           Float
+  email            String
+  gateway          String    // 'paystack' or 'flutterwave'
+  status           String    // 'pending', 'completed', 'failed'
+  applicationId    String
+  paidAt           DateTime?
+  gatewayResponse  String?   // JSON string
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relations
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+model Notification {
+  id            String   @id @default(cuid())
+  userId        String
+  title         String
+  message       String
+  type          String   // 'application_update', 'payment_confirmation', etc.
+  isRead        Boolean  @default(false)
+  data          String?  // JSON string
+  applicationId String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Service Assignment for staff members
+model ServiceAssignment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  serviceType String   // IDENTIFICATION_LETTER, BIRTH_CERTIFICATE, etc.
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, serviceType])
+  @@map("service_assignments")
+}
+
+// Staff Actions on applications
+model StaffAction {
+  id            String      @id @default(cuid())
+  actorId       String      // staff/admin user id
+  actor         User        @relation("StaffActionsByUser", fields: [actorId], references: [id])
+  applicationId String
+  application   Application @relation("ActionsOnApplication", fields: [applicationId], references: [id])
+  action        String      // APPROVE, REJECT, EDIT, DELETE, ASSIGN, COMMENT
+  details       String?     // JSON string
+  createdAt     DateTime    @default(now())
+
+  @@map("staff_actions")
+}
+
+// Refresh tokens for JWT management
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  token     String   @unique
+  revoked   Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+// Password reset tokens
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// User interface settings and preferences
+model UserSettings {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme       String   @default("system") // light, dark, system
+  language    String   @default("en")
+  fontSize    String   @default("medium") // small, medium, large
+  soundEnabled Boolean @default(true)
+  autoSave    Boolean  @default(true)
+  compactMode Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_settings")
+}
+
+// Notification preferences
+model NotificationSettings {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailNotifications   Boolean  @default(true)
+  smsNotifications     Boolean  @default(false)
+  pushNotifications    Boolean  @default(true)
+  applicationUpdates   Boolean  @default(true)
+  paymentReminders     Boolean  @default(true)
+  systemAnnouncements  Boolean  @default(true)
+  documentExpiry       Boolean  @default(true)
+  serviceUpdates       Boolean  @default(false)
+  accountSecurity      Boolean  @default(true)
+  weeklyDigest         Boolean  @default(false)
+  quietHoursEnabled    Boolean  @default(false)
+  quietHoursStart      String   @default("22:00")
+  quietHoursEnd        String   @default("08:00")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("notification_settings")
+}
+
+// Privacy settings
+model PrivacySettings {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profileVisibility     String   @default("private") // public, limited, private
+  dataSharing           Boolean  @default(false)
+  analyticsOptOut       Boolean  @default(false)
+  locationTracking      Boolean  @default(false)
+  cookiesAccepted       Boolean  @default(true)
+  marketingEmails       Boolean  @default(false)
+  thirdPartyIntegrations Boolean @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("privacy_settings")
+}
+
+// Security settings
+model SecuritySettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  twoFactorEnabled   Boolean  @default(false)
+  loginNotifications Boolean  @default(true)
+  sessionTimeout     Int      @default(30) // minutes
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("security_settings")
+}
+
+// Audit log for tracking changes
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String
+  entityId  String
+  oldData   String?  // JSON string
+  newData   String?  // JSON string
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: onelga-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: onelga_user
+      POSTGRES_PASSWORD: onelga_password
+      POSTGRES_DB: onelga_services
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - onelga-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U onelga_user -d onelga_services"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    container_name: onelga-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - onelga-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (Development)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: onelga-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: "postgresql://onelga_user:onelga_password@postgres:5432/onelga_services?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: "dev-jwt-secret-change-in-production"
+      FRONTEND_URL: "http://localhost:3000"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+    networks:
+      - onelga-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  # Frontend (Development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: onelga-frontend
+    restart: unless-stopped
+    environment:
+      REACT_APP_API_URL: "http://localhost:5000/api"
+      REACT_APP_ENVIRONMENT: development
+      GENERATE_SOURCEMAP: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - onelga-network
+    depends_on:
+      - backend
+    command: npm start
+
+  # PgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: onelga-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@onelga.gov.ng
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DISABLE_POSTFIX: "true"
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - onelga-network
+    depends_on:
+      - postgres
+
+  # Nginx Reverse Proxy (Production)
+  nginx:
+    image: nginx:alpine
+    container_name: onelga-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/ssl:/etc/ssl/certs:ro
+      - ./frontend/build:/var/www/html:ro
+    networks:
+      - onelga-network
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  onelga-network:
+    driver: bridge

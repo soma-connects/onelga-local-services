@@ -1,0 +1,206 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  DATABASE_URL: "postgresql://onelga_user:onelga_password@localhost:5432/onelga_services_test?schema=public"
+  JWT_SECRET: "test-jwt-secret"
+
+jobs:
+  # Test Backend
+  backend-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: onelga_user
+          POSTGRES_PASSWORD: onelga_password
+          POSTGRES_DB: onelga_services_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: ./backend
+        run: npx prisma generate
+
+      - name: Run database migrations
+        working-directory: ./backend
+        run: npx prisma migrate deploy
+
+      - name: Run backend linting
+        working-directory: ./backend
+        run: npm run lint
+
+      - name: Run backend tests
+        working-directory: ./backend
+        run: npm run test:coverage
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./backend/coverage/lcov.info
+          flags: backend
+
+  # Test Frontend
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run frontend linting
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm test -- --coverage --watchAll=false
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./frontend/coverage/lcov.info
+          flags: frontend
+
+  # Build Applications
+  build:
+    needs: [backend-test, frontend-test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Build backend
+        working-directory: ./backend
+        run: npm run build
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: |
+            frontend/build/
+            backend/dist/
+
+  # Security Audit
+  security-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Run npm audit for backend
+        working-directory: ./backend
+        run: npm audit --audit-level high
+
+      - name: Run npm audit for frontend
+        working-directory: ./frontend
+        run: npm audit --audit-level high
+
+  # Deploy to Staging (only on develop branch)
+  deploy-staging:
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    needs: [build, security-audit]
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your deployment commands here
+
+  # Deploy to Production (only on main branch)
+  deploy-production:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [build, security-audit]
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your deployment commands here
