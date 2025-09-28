@@ -69,6 +69,8 @@ import {
   PersonRemove,
   Visibility,
   VisibilityOff,
+  VolumeUp,      // <-- Add this
+  VolumeOff,
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
@@ -115,7 +117,7 @@ function ConfirmationDialog({ open, title, message, onConfirm, onCancel, severit
     <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         {severity === 'warning' && <Warning color="warning" />}
-        {severity === 'error' && <Error color="error" />}
+        {severity === 'error' && <ErrorIcon color="error" />}
         {severity === 'info' && <Info color="info" />}
         {title}
       </DialogTitle>
@@ -920,9 +922,11 @@ const SettingsPage: React.FC = () => {
                   <CardContent>
                     <List>
                       <ListItem>
+
                         <ListItemIcon>
                           {userSettings.soundEnabled ? <VolumeUp /> : <VolumeOff />}
                         </ListItemIcon>
+
                         <ListItemText
                           primary="Notification Sounds"
                           secondary="Play sounds for notifications"
