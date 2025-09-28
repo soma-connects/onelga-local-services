@@ -1,4 +1,6 @@
 import { Request } from 'express';
+import { ParamsDictionary } from 'express-serve-static-core';
+
 
 // User interface for authentication
 export interface User {
@@ -32,7 +34,7 @@ export interface JWTPayload {
 }
 
 // Extended Request interface with user
-export interface AuthRequest<T = any, P = any> extends Request {
+export interface AuthRequest<T = any, P extends ParamsDictionary = ParamsDictionary> extends Request {
   user?: User;
   body: T;
   params: P;
