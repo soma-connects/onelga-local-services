@@ -39,33 +39,42 @@ import {
   Stack,
   InputAdornment,
   CircularProgress,
-  Badge,
-  return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, borderRadius: 3 }}>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
-          Settings
-        </Typography>
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ mb: 3 }}
-        >
-          {SETTINGS_SECTIONS.map((section, idx) => (
-            <Tab key={section.label} label={section.label} />
-          ))}
-        </Tabs>
-        <Box>
-          {SETTINGS_SECTIONS[activeTab].component}
-        </Box>
-      </Paper>
-    </Container>
-  );
-};
-
-export default SettingsPage;
+  Badge
+} from '@mui/material';
+import {
+  AccountCircle,
+  Security,
+  Notifications,
+  PrivacyTip as Privacy,
+  Palette,
+  Storage,
+  Warning,
+  Error as ErrorIcon,
+  Info,
+  Edit,
+  VerifiedUser,
+  AccessTime,
+  Key,
+  Shield,
+  Email,
+  Phone,
+  CheckCircle,
+  Download,
+  LightMode,
+  DarkMode,
+  Brightness4,
+  CloudDownload,
+  DataUsage,
+  Archive,
+  PersonRemove,
+  Visibility,
+  VisibilityOff,
+} from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout } from '../store/authSlice';
+import settingsService from '../services/settingsService';
+import useSettings from '../hooks/useSettings';
+import { RootState } from '../types/rootState';
 
 // Interfaces
 interface TabPanelProps {
