@@ -74,6 +74,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
 import settingsService from '../services/settingsService';
 import useSettings from '../hooks/useSettings';
+import { RootState } from '../types/rootState';
 
 // Interfaces
 interface TabPanelProps {
