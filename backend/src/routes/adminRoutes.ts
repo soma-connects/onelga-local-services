@@ -23,27 +23,35 @@ router.get('/applications', async (req, res) => {
   if (status) (where as any).status = status;
   if (priority) (where as any).priority = priority;
   if (serviceType) (where as any).type = serviceType;
-    // Optionally add search by applicant name/email
-    // This assumes Application has a relation to User
-    // For simplicity, not adding search here; can be extended
 
-    const [applications, total] = await Promise.all([
-      req.app.locals['prisma'].application.findMany({
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { firstName: true, lastName: true, email: true } },
-        },
-        where,
-      }),
-      req.app.locals['prisma'].application.count({ where }),
-    ]);
+  // Add search by applicant name or email
+  if (search) {
+    where.user = {
+      OR: [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ],
+    };
+  }
 
-    res.json({
-      success: true,
-      data: { applications, total, page: Number(page), limit: Number(limit) },
-    });
+  const [applications, total] = await Promise.all([
+    req.app.locals['prisma'].application.findMany({
+      skip,
+      take: Number(limit),
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { firstName: true, lastName: true, email: true } },
+      },
+      where,
+    }),
+    req.app.locals['prisma'].application.count({ where }),
+  ]);
+
+  res.json({
+    success: true,
+    data: { applications, total, page: Number(page), limit: Number(limit) },
+  });
   } catch (error: unknown) {
     let errorMessage = 'Unknown error';
     if (typeof error === 'object' && error && 'message' in error) {
