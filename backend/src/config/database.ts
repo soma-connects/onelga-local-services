@@ -9,7 +9,7 @@ declare global {
 // Prevent multiple instances of Prisma Client in development
 const prisma = globalThis.__prisma || 
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' 
+    log: process.env['NODE_ENV'] === 'development'
       ? [
           { emit: 'event', level: 'query' },
           { emit: 'event', level: 'info' },

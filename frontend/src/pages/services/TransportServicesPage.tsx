@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -98,6 +98,7 @@ import {
   EmergencyShare,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI, documentsAPI } from '../../services/api';
 
 interface TransportService {
   id: string;
@@ -188,6 +189,7 @@ const TransportServicesPage: React.FC = () => {
     email: '',
     address: '',
   stateOfOrigin: '',
+    lgaOfOrigin: '',
     occupation: '',
     employerAddress: '',
     
@@ -224,237 +226,98 @@ const TransportServicesPage: React.FC = () => {
     agreeToTerms: false,
   });
 
-  // Mock transport services data
-  const transportServices: TransportService[] = [
-    {
-      id: '1',
-      name: 'Vehicle Registration',
-      description: 'Register new vehicles and obtain license plates',
-      category: 'Vehicle Registration',
-      requirements: [
-        'Certificate of Ownership or Purchase Receipt',
-        'Valid Driver\'s License',
-        'Vehicle Insurance Certificate',
-        'Roadworthiness Certificate',
-        'Customs Duty Payment (for imported vehicles)'
-      ],
-      processingTime: '3-5 working days',
-      cost: '₦15,000 - ₦35,000 (depending on vehicle type)',
-      validity: '1 year (renewable)',
-      status: 'Available',
-      priority: 'High',
-      documents: ['Vehicle Papers', 'Insurance', 'ID Card', 'Passport Photos'],
-      renewalRequired: true
-    },
-    {
-      id: '2',
-      name: 'Driver\'s License (New Application)',
-      description: 'Apply for a new driver\'s license for first-time drivers',
-      category: 'Driver License',
-      requirements: [
-        'Valid means of identification',
-        'Medical fitness certificate',
-        'Driving school certificate',
-        'Biometric data capture',
-        'Pass written and practical tests'
-      ],
-      processingTime: '2-3 weeks (including test scheduling)',
-      cost: '₦6,350 (Federal Road Safety Corps fee)',
-      validity: '5 years',
-      status: 'Available',
-      priority: 'High',
-      documents: ['Medical Certificate', 'Driving School Certificate', 'ID Card', 'Passport Photos'],
-      renewalRequired: true
-    },
-    {
-      id: '3',
-      name: 'Driver\'s License Renewal',
-      description: 'Renew existing driver\'s license before expiry',
-      category: 'Driver License',
-      requirements: [
-        'Current driver\'s license',
-        'Medical fitness certificate',
-        'Biometric verification',
-        'Valid identification'
-      ],
-      processingTime: '1-2 working days',
-      cost: '₦5,350',
-      validity: '5 years',
-      status: 'Available',
-      priority: 'Medium',
-      documents: ['Current License', 'Medical Certificate', 'ID Card'],
-      renewalRequired: true
-    },
-    {
-      id: '4',
-      name: 'Commercial Vehicle Permit',
-      description: 'Permit for commercial transportation services',
-      category: 'Permits',
-      requirements: [
-        'Commercial driver\'s license',
-        'Vehicle registration documents',
-        'Business registration certificate',
-        'Route application form',
-        'Vehicle inspection certificate'
-      ],
-      processingTime: '1-2 weeks',
-      cost: '₦25,000 - ₦50,000 (depending on route)',
-      validity: '1 year',
-      status: 'Available',
-      priority: 'Medium',
-      documents: ['Business Certificate', 'Vehicle Papers', 'Route Plan', 'Insurance'],
-      renewalRequired: true
-    },
-    {
-      id: '5',
-      name: 'Motorcycle/Tricycle Registration',
-      description: 'Registration for motorcycles and tricycles',
-      category: 'Vehicle Registration',
-      requirements: [
-        'Purchase receipt or ownership documents',
-        'Motorcycle rider\'s license',
-        'Insurance certificate',
-        'Roadworthiness certificate (for tricycles)',
-        'Union membership (where applicable)'
-      ],
-      processingTime: '2-3 working days',
-      cost: '₦8,000 - ₦12,000',
-      validity: '1 year',
-      status: 'Available',
-      priority: 'Medium',
-      documents: ['Purchase Receipt', 'Insurance', 'Union Card', 'ID Card'],
-      renewalRequired: true
-    },
-    {
-      id: '6',
-      name: 'Public Transport Route License',
-      description: 'License for operating public transportation on specific routes',
-      category: 'Public Transport',
-      requirements: [
-        'Commercial vehicle registration',
-        'Professional driver\'s license',
-        'Route feasibility study',
-        'Financial capacity certificate',
-        'Vehicle roadworthiness certificate'
-      ],
-      processingTime: '3-4 weeks',
-      cost: '₦35,000 - ₦75,000',
-      validity: '2 years',
-      status: 'Limited',
-      priority: 'Medium',
-      documents: ['Feasibility Study', 'Financial Certificate', 'Vehicle Papers'],
-      renewalRequired: true
-    },
-    {
-      id: '7',
-      name: 'Roadworthiness Certificate',
-      description: 'Annual vehicle inspection and roadworthiness certification',
-      category: 'Road Services',
-      requirements: [
-        'Vehicle registration documents',
-        'Valid insurance certificate',
-        'Vehicle physical inspection',
-        'Emission test certificate'
-      ],
-      processingTime: '1 day (after inspection)',
-      cost: '₦5,000 - ₦8,000',
-      validity: '1 year',
-      status: 'Available',
-      priority: 'High',
-      documents: ['Vehicle Registration', 'Insurance Certificate'],
-      renewalRequired: true
-    },
-    {
-      id: '8',
-      name: 'Hackney Carriage License',
-      description: 'License for taxi and ride-hailing services',
-      category: 'Commercial Transport',
-      requirements: [
-        'Professional driver\'s license',
-        'Vehicle registration (not older than 10 years)',
-        'Comprehensive insurance',
-        'Police clearance certificate',
-        'Medical fitness certificate'
-      ],
-      processingTime: '1-2 weeks',
-      cost: '₦20,000 - ₦30,000',
-      validity: '1 year',
-      status: 'Available',
-      priority: 'Medium',
-      documents: ['Police Clearance', 'Medical Certificate', 'Vehicle Papers', 'Insurance'],
-      renewalRequired: true
-    }
-  ];
+  const [transportServices, setTransportServices] = useState<TransportService[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ id: string; name: string }>>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [transportPrograms, setTransportPrograms] = useState<Array<{ id: string; name: string; type: string; description: string; status: 'Open' | 'Waitlist' | 'Closed' | 'Coming Soon'; benefits: string[]; eligibility: string[]; applicationDeadline?: string }>>([]);
 
-  // Mock applications data
-  React.useEffect(() => {
-    const mockApplications: TransportApplication[] = [
+  // Load services and applications from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('transport'))
+          .map((s: any): TransportService => {
+            const status = (s.status || 'Available').toString().toLowerCase();
+            const statusMap: Record<string, TransportService['status']> = {
+              available: 'Available',
+              'temporarily_unavailable': 'Suspended',
+              coming_soon: 'Seasonal',
+            };
+            return {
+              id: s.id?.toString() || s._id?.toString() || s.name,
+              name: s.name || s.title || 'Service',
+              description: s.description || 'No description provided.',
+              category: (s.category || 'Vehicle Registration') as any,
+              requirements: Array.isArray(s.requirements) ? s.requirements : [],
+              processingTime: s.processingTime || s.sla || '3-5 days',
+              cost: typeof s.fee === 'number' ? `₦${s.fee.toLocaleString()}` : (s.fee || 'Varies'),
+              validity: s.validity || '1 year',
+              status: statusMap[status] || 'Available',
+              priority: s.priority || undefined,
+              documents: Array.isArray(s.documents) ? s.documents : [],
+              renewalRequired: Boolean(s.renewalRequired),
+            };
+          });
+        setTransportServices(normalized);
+      } catch (e) {
+        setTransportServices([]);
+      }
+    };
+    const loadApplications = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'VEHICLE_REGISTRATION', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: TransportApplication[] = apps.map((app: any) => ({
+          id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+          serviceId: app.serviceId || app.type || 'transport',
+          serviceName: app.serviceName || app.type || 'Transport Service',
+          applicantName: app.data?.applicantName || '-',
+          applicationDate: (app.createdAt || new Date()).toString().split('T')[0],
+          status: (app.status || 'Submitted') as TransportApplication['status'],
+          referenceNumber: app.reference || app.referenceNumber,
+          licenseNumber: app.data?.licenseNumber,
+          plateNumber: app.data?.plateNumber,
+          expiryDate: app.data?.expiryDate,
+          officer: app.officer,
+          notes: app.notes,
+          fee: app.data?.fee,
+        }));
+        setApplications(mapped);
+      } catch (e) {
+        setApplications([]);
+      }
+      setVehicles([]);
+      setLicenses([]);
+    };
+    loadServices();
+    loadApplications();
+    // Fallback transport programs
+    setTransportPrograms([
       {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'Vehicle Registration',
-        applicantName: 'John Doe',
-        applicationDate: '2024-01-15',
-        status: 'Ready for Collection',
-        referenceNumber: 'VR2024001',
-        plateNumber: 'OGL-123-AB',
-        expiryDate: '2025-01-15',
-        officer: 'Inspector James',
-        fee: 25000
+        id: 'tp-1',
+        name: 'Driver Training Program',
+        type: 'Driver License',
+        description: 'Official driver training and safety program for new drivers.',
+        status: 'Open',
+        benefits: ['Training certificate', 'Road safety education'],
+        eligibility: ['Resident of ONELGA', '18+ years'],
+        applicationDeadline: new Date(Date.now() + 20*24*60*60*1000).toISOString(),
       },
       {
-        id: '2',
-        serviceId: '2',
-        serviceName: 'Driver\'s License (New Application)',
-        applicantName: 'Jane Smith',
-        applicationDate: '2024-01-20',
-        status: 'Testing',
-        referenceNumber: 'DL2024002',
-        testDate: '2024-02-05',
-        officer: 'Officer Mary'
-      }
-    ];
-    setApplications(mockApplications);
-
-    // Mock vehicles data
-    const mockVehicles: Vehicle[] = [
-      {
-        id: '1',
-        ownerName: 'John Doe',
-        plateNumber: 'OGL-123-AB',
-        vehicleType: 'Private Car',
-        make: 'Toyota',
-        model: 'Camry',
-        year: 2020,
-        color: 'Silver',
-        engineNumber: 'ENG123456',
-        chassisNumber: 'CHS789012',
-        registrationDate: '2024-01-15',
-        expiryDate: '2025-01-15',
-        status: 'Active',
-        insuranceStatus: 'Valid',
-        roadworthiness: 'Valid',
-        violations: 0
-      }
-    ];
-    setVehicles(mockVehicles);
-
-    // Mock licenses data
-    const mockLicenses: DriverLicense[] = [
-      {
-        id: '1',
-        driverName: 'John Doe',
-        licenseNumber: 'OGL001234567',
-        licenseClass: 'Class C (Private)',
-        issueDate: '2024-01-20',
-        expiryDate: '2029-01-20',
-        status: 'Active',
-        endorsements: [],
-        violations: 0,
-        points: 0
-      }
-    ];
-    setLicenses(mockLicenses);
+        id: 'tp-2',
+        name: 'Public Transport Subsidy',
+        type: 'Public Transport',
+        description: 'Subsidized fares for students and senior citizens.',
+        status: 'Coming Soon',
+        benefits: ['Discounted fares'],
+        eligibility: ['Valid student ID or age 60+'],
+      },
+    ]);
   }, []);
 
   // Form handlers
@@ -481,16 +344,37 @@ const TransportServicesPage: React.FC = () => {
     if (!selectedService) return;
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newApplication: TransportApplication = {
-        id: Date.now().toString(),
+      const payload = {
+        type: selectedService.category === 'Vehicle Registration' ? 'VEHICLE_REGISTRATION' : 'TRANSPORT_SERVICE',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        applicantName: `${applicationForm.firstName} ${applicationForm.lastName}`,
-        applicationDate: new Date().toISOString().split('T')[0],
-        status: 'Submitted',
-        referenceNumber: `TR${Date.now()}`,
+        data: {
+          applicantName: `${applicationForm.firstName} ${applicationForm.lastName}`.trim(),
+          phoneNumber: applicationForm.phoneNumber,
+          email: applicationForm.email,
+          address: applicationForm.address,
+          licenseClass: applicationForm.licenseClass,
+          vehicleType: applicationForm.vehicleType,
+          vehicleMake: applicationForm.vehicleMake,
+          vehicleModel: applicationForm.vehicleModel,
+          vehicleYear: applicationForm.vehicleYear,
+          vehicleColor: applicationForm.vehicleColor,
+          engineNumber: applicationForm.engineNumber,
+          chassisNumber: applicationForm.chassisNumber,
+          businessName: applicationForm.businessName,
+          routeDetails: applicationForm.routeDetails,
+          documents: uploadedDocs.map(d => d.id),
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newApplication: TransportApplication = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
+        applicantName: created.data?.applicantName || `${applicationForm.firstName} ${applicationForm.lastName}`.trim(),
+        applicationDate: (created.createdAt || new Date()).toString().split('T')[0],
+        status: (created.status || 'Submitted') as TransportApplication['status'],
+        referenceNumber: created.reference || created.referenceNumber,
       };
 
       setApplications(prev => [newApplication, ...prev]);
@@ -520,6 +404,9 @@ const TransportServicesPage: React.FC = () => {
       emergencyContactPhone: '', emergencyContactRelationship: '', uploadedDocuments: [],
       agreeToTerms: false
     });
+    setUploadedDocs([]);
+    setSelectedFile(null);
+    setUploadingDoc(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -1287,7 +1174,7 @@ const TransportServicesPage: React.FC = () => {
         {applicationStep === 2 && (
           <Box>
             <Typography variant="h6" gutterBottom>
-              Required Documents
+              Documents
             </Typography>
             <Alert severity="info" sx={{ mb: 3 }}>
               Please upload or bring the following documents to complete your application.
@@ -1306,6 +1193,41 @@ const TransportServicesPage: React.FC = () => {
               </List>
             )}
             
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mt: 2 }}>
+              <Button variant="outlined" component="label" startIcon={<Upload />}>
+                Select File
+                <input type="file" hidden onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.jpeg,.png" />
+              </Button>
+              <Button variant="contained" disabled={!selectedFile || uploadingDoc} onClick={async () => {
+                if (!selectedFile) return;
+                try {
+                  setUploadingDoc(true);
+                  const res = await documentsAPI.upload(selectedFile);
+                  const doc = (res as any).data || res;
+                  setUploadedDocs(prev => [...prev, { id: doc.id, name: doc.name }]);
+                  setSelectedFile(null);
+                  toast.success('Document uploaded');
+                } catch (e) {
+                  toast.error('Failed to upload document');
+                } finally {
+                  setUploadingDoc(false);
+                }
+              }}>Upload</Button>
+            </Stack>
+            {uploadedDocs.length > 0 && (
+              <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>Uploaded</Typography>
+                <List dense>
+                  {uploadedDocs.map((d) => (
+                    <ListItem key={d.id} sx={{ py: 0 }}>
+                      <ListItemIcon><Description /></ListItemIcon>
+                      <ListItemText primary={d.name} secondary={d.id} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -1342,6 +1264,75 @@ const TransportServicesPage: React.FC = () => {
     );
   };
 
+  const renderPrograms = () => (
+    <Grid container spacing={3}>
+      {transportPrograms.map((program) => (
+        <Grid item xs={12} md={6} key={program.id}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Group />
+                <Box sx={{ ml: 1, flexGrow: 1 }}>
+                  <Typography variant="h6" component="h3">{program.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">{program.type}</Typography>
+                </Box>
+                <Chip label={program.status} size="small" color={program.status === 'Open' ? 'success' : program.status === 'Waitlist' ? 'warning' : 'default'} />
+              </Box>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                {program.description}
+              </Typography>
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="body2" fontWeight="medium">Benefits & Eligibility</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>Benefits:</Typography>
+                  <List dense>
+                    {program.benefits.map((b, i) => (
+                      <ListItem key={i} sx={{ py: 0 }}><ListItemText primary={`• ${b}`} primaryTypographyProps={{ variant: 'body2' }} /></ListItem>
+                    ))}
+                  </List>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>Eligibility:</Typography>
+                  <List dense>
+                    {program.eligibility.map((e, i) => (
+                      <ListItem key={i} sx={{ py: 0 }}><ListItemText primary={`• ${e}`} primaryTypographyProps={{ variant: 'body2' }} /></ListItem>
+                    ))}
+                  </List>
+                </AccordionDetails>
+              </Accordion>
+            </CardContent>
+            <CardActions>
+              <Button
+                size="small"
+                startIcon={<PersonAdd />}
+                disabled={program.status !== 'Open'}
+                onClick={() => {
+                  setSelectedService({
+                    id: program.id,
+                    name: program.name,
+                    description: program.description,
+                    category: 'Public Transport',
+                    requirements: [],
+                    processingTime: '3-5 days',
+                    cost: 'Varies',
+                    validity: '1 year',
+                    status: 'Available',
+                    documents: [],
+                    renewalRequired: false,
+                  } as any);
+                  setShowApplicationDialog(true);
+                }}
+              >
+                Apply
+              </Button>
+              <Button size="small" startIcon={<Visibility />}>Learn More</Button>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
@@ -1361,6 +1352,7 @@ const TransportServicesPage: React.FC = () => {
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={selectedTab} onChange={(e, newValue) => setSelectedTab(newValue)} aria-label="transport services tabs">
           <Tab icon={<Assignment />} label="Services" />
+          <Tab icon={<Group />} label="Programs" />
           <Tab icon={<Receipt />} label="My Applications" />
           <Tab icon={<DirectionsCar />} label="Vehicles" />
           <Tab icon={<Traffic />} label="Road Info" />
@@ -1369,9 +1361,10 @@ const TransportServicesPage: React.FC = () => {
 
       {/* Tab Content */}
       {selectedTab === 0 && renderServices()}
-      {selectedTab === 1 && renderApplications()}
-      {selectedTab === 2 && renderVehicles()}
-      {selectedTab === 3 && renderRoadInfo()}
+      {selectedTab === 1 && renderPrograms()}
+      {selectedTab === 2 && renderApplications()}
+      {selectedTab === 3 && renderVehicles()}
+      {selectedTab === 4 && renderRoadInfo()}
 
       {/* Application Dialog */}
       <Dialog

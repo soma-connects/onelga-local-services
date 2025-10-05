@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken, staffOrAdmin } from '../middleware/authMiddleware';
+import { authenticateToken, requireAdminOrStaff, requireStaffService } from '../middleware/auth';
 import {
   applyForIdentificationLetter,
   getUserApplications,
@@ -238,7 +238,7 @@ router.get('/download/:id', authenticateToken, downloadLetter);
  *       403:
  *         description: Admin access required
  */
-router.get('/admin/applications', authenticateToken, staffOrAdmin, getAllApplications);
+router.get('/admin/applications', authenticateToken, requireAdminOrStaff, requireStaffService(() => 'IDENTIFICATION_LETTER'), getAllApplications);
 
 /**
  * @swagger
@@ -282,7 +282,7 @@ router.get('/admin/applications', authenticateToken, staffOrAdmin, getAllApplica
  *       403:
  *         description: Admin access required
  */
-router.put('/admin/applications/:id/status', authenticateToken, staffOrAdmin, updateApplicationStatus);
+router.put('/admin/applications/:id/status', authenticateToken, requireAdminOrStaff, requireStaffService(() => 'IDENTIFICATION_LETTER'), updateApplicationStatus);
 
 /**
  * @swagger
@@ -300,6 +300,6 @@ router.put('/admin/applications/:id/status', authenticateToken, staffOrAdmin, up
  *       403:
  *         description: Admin access required
  */
-router.get('/admin/stats', authenticateToken, staffOrAdmin, getApplicationStats);
+router.get('/admin/stats', authenticateToken, requireAdminOrStaff, requireStaffService(() => 'IDENTIFICATION_LETTER'), getApplicationStats);
 
 export default router;

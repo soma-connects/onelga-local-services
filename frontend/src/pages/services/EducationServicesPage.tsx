@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -70,6 +70,7 @@ import {
   Group,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI } from '../../services/api';
 
 interface EducationService {
   id: string;
@@ -146,202 +147,64 @@ const EducationServicesPage: React.FC = () => {
   additionalInfo: ''
   });
 
-  // Mock education services data
-  const educationServices: EducationService[] = [
-    {
-      id: '1',
-      name: 'Primary School Enrollment',
-      description: 'Register children for primary education in Onelga LGA public schools',
-      category: 'School Enrollment',
-  eligibility: ['Age 6-12 years', 'Resident of Onelga LGA', 'Birth certificate required'],
-      requirements: ['Birth certificate', 'Immunization record', 'Passport photograph', 'Proof of residence'],
-      cost: 'Free',
-      duration: 'Academic year',
-      status: 'Available',
-      applicants: 245,
-      maxApplicants: 500
-    },
-    {
-      id: '2',
-      name: 'Secondary School Enrollment',
-      description: 'Admission into public secondary schools within Onelga LGA',
-      category: 'School Enrollment',
-  eligibility: ['Primary school certificate', 'Age 12-16 years', 'Entrance examination'],
-      requirements: ['Primary school certificate', 'Birth certificate', 'Medical certificate', '2 passport photos'],
-      cost: '₦5,000 registration fee',
-      duration: '6 years',
-      status: 'Available',
-      deadline: '2024-08-31',
-      applicants: 189,
-      maxApplicants: 300
-    },
-    {
-      id: '3',
-      name: 'Adult Literacy Program',
-      description: 'Basic literacy and numeracy classes for adults who missed formal education',
-      category: 'Adult Education',
-  eligibility: ['Adults 18+ years', 'Basic English/local language', 'Commitment to attend classes'],
-      requirements: ['Valid ID', 'Proof of residence', 'Application form'],
-      cost: 'Free',
-      duration: '6 months',
-      status: 'Available',
-      applicants: 67,
-      maxApplicants: 100
-    },
-    {
-      id: '4',
-      name: 'Vocational Training Program',
-      description: 'Technical and vocational skills training in various trades',
-      category: 'Programs',
-  eligibility: ['Age 16+ years', 'Basic education', 'Interest in technical skills'],
-      requirements: ['Educational certificate', 'Medical certificate', 'Application form'],
-      cost: '₦15,000',
-      duration: '1-2 years',
-      status: 'Available',
-      applicants: 123,
-      maxApplicants: 200
-    },
-    {
-      id: '5',
-      name: 'Special Needs Education',
-      description: 'Specialized education services for children with special needs',
-      category: 'Support',
-  eligibility: ['Children with disabilities', 'Medical assessment', 'Age 3-18 years'],
-      requirements: ['Medical report', 'Birth certificate', 'Assessment by specialist'],
-      cost: 'Subsidized',
-      duration: 'As needed',
-      status: 'Available',
-      applicants: 34,
-      maxApplicants: 50
-    }
-  ];
+  const [educationServices, setEducationServices] = useState<EducationService[]>([]);
 
-  // Mock scholarship programs
-  const scholarshipPrograms: ScholarshipProgram[] = [
-    {
-      id: '1',
-      name: 'Onelga Academic Excellence Award',
-      type: 'Academic Excellence',
-      level: 'Secondary',
-      amount: '₦100,000 per year',
-      duration: '3 years',
-      description: 'Merit-based scholarship for outstanding students in secondary education',
-      eligibility: ['Minimum 85% average', 'Leadership qualities', 'Community service'],
-      deadline: '2024-09-30',
-      status: 'Open',
-      applicants: 45,
-      awards: 10
-    },
-    {
-      id: '2',
-      name: 'Rivers State University Partnership',
-      type: 'STEM',
-      level: 'Tertiary',
-      amount: '₦200,000 per year',
-      duration: '4 years',
-      description: 'Full scholarship for STEM courses at Rivers State University',
-      eligibility: ['WAEC with 5 credits including Math & English', 'Science subjects', 'JAMB score 250+'],
-      deadline: '2024-07-15',
-      status: 'Open',
-      applicants: 23,
-      awards: 5
-    },
-    {
-      id: '3',
-      name: 'Sports Excellence Grant',
-      type: 'Sports',
-      level: 'Secondary',
-      amount: '₦50,000',
-      duration: '1 year',
-      description: 'Support for talented young athletes in various sports disciplines',
-      eligibility: ['Proven sports talent', 'Training commitment', 'Age 14-18 years'],
-      deadline: '2024-08-15',
-      status: 'Open',
-      applicants: 18,
-      awards: 8
-    },
-    {
-      id: '4',
-      name: 'Creative Arts Scholarship',
-      type: 'Arts',
-      level: 'Secondary',
-      amount: '₦75,000',
-      duration: '2 years',
-      description: 'Supporting young artists, musicians, and creative talent',
-      eligibility: ['Portfolio submission', 'Creative talent demonstration', 'Age 12-17 years'],
-      deadline: '2024-10-01',
-      status: 'Open',
-      applicants: 31,
-      awards: 6
-    },
-    {
-      id: '5',
-      name: 'Need-Based Education Support',
-      type: 'Need-Based',
-      level: 'Primary',
-      amount: '₦30,000',
-      duration: '1 year',
-      description: 'Financial assistance for families who cannot afford education costs',
-      eligibility: ['Family income verification', 'Academic performance', 'Community recommendation'],
-      deadline: '2024-12-31',
-      status: 'Open',
-      applicants: 67,
-      awards: 25
-    }
-  ];
+  const [scholarshipPrograms, setScholarshipPrograms] = useState<ScholarshipProgram[]>([]);
 
-  // Mock data initialization
-  React.useEffect(() => {
-    const mockApplications: EducationApplication[] = [
-      {
-        id: '1',
-        serviceId: '2',
-        serviceName: 'Secondary School Enrollment',
-        studentName: 'Adaeze Okafor',
-        guardianName: 'Mrs. Ngozi Okafor',
-        level: 'JSS 1',
-        status: 'Under Review',
-        submissionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        referenceNumber: 'EDU2024001',
-        notes: 'Entrance exam scheduled'
-      },
-      {
-        id: '2',
-        serviceId: '1',
-        serviceName: 'Primary School Enrollment',
-        studentName: 'Emeka Nwankwo',
-        guardianName: 'Mr. Chukwu Nwankwo',
-        level: 'Primary 1',
-        status: 'Approved',
-        submissionDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-        referenceNumber: 'EDU2024002',
-        notes: 'School assignment: Onelga Primary School'
+  // Load services and applications from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('education'))
+          .map((s: any): EducationService => ({
+            id: s.id?.toString() || s._id?.toString() || s.name,
+            name: s.name || s.title || 'Service',
+            description: s.description || 'No description provided.',
+            category: (s.category || 'Programs') as any,
+            eligibility: Array.isArray(s.eligibility) ? s.eligibility : [],
+            requirements: Array.isArray(s.requirements) ? s.requirements : [],
+            deadline: s.deadline,
+            cost: typeof s.fee === 'number' ? `₦${s.fee.toLocaleString()}` : (s.fee || 'Free'),
+            duration: s.duration || s.processingTime || 'Varies',
+            status: ((s.status || 'Available').toString().toLowerCase() === 'coming_soon' ? 'Coming Soon' : (s.status || 'Available')) as any,
+            applicants: s.applicants,
+            maxApplicants: s.maxApplicants,
+          }));
+        setEducationServices(normalized);
+      } catch (e) {
+        setEducationServices([]);
       }
-    ];
-    setApplications(mockApplications);
-
-    const mockRecords: AcademicRecord[] = [
-      {
-        id: '1',
-        studentName: 'Adaeze Okafor',
-        school: 'Onelga Secondary School',
-        level: 'JSS 2',
-        year: '2023/2024',
-        gpa: '3.8',
-        achievements: ['Best in Mathematics', 'Science Quiz Winner', 'Perfect Attendance'],
-        status: 'Active'
-      },
-      {
-        id: '2',
-        studentName: 'Emeka Nwankwo',
-        school: 'Onelga Primary School',
-        level: 'Primary 3',
-        year: '2023/2024',
-        achievements: ['Reading Champion', 'Sports Day Winner'],
-        status: 'Active'
+      // Scholarships endpoint not defined → keep empty or hide UI
+      setScholarshipPrograms([]);
+    };
+    const loadApplications = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'EDUCATION_APPLICATION', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: EducationApplication[] = apps.map((app: any) => ({
+          id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+          serviceId: app.serviceId || app.type || 'education',
+          serviceName: app.serviceName || app.type || 'Education Service',
+          studentName: app.data?.studentName || '-',
+          guardianName: app.data?.guardianName || '-',
+          level: app.data?.level || '-',
+          status: (app.status || 'Submitted') as EducationApplication['status'],
+          submissionDate: app.createdAt || new Date().toISOString(),
+          referenceNumber: app.reference || app.referenceNumber,
+          notes: app.notes,
+        }));
+        setApplications(mapped);
+      } catch (e) {
+        setApplications([]);
       }
-    ];
-    setAcademicRecords(mockRecords);
+      setAcademicRecords([]);
+    };
+    loadServices();
+    loadApplications();
   }, []);
 
   // Handle service application
@@ -364,18 +227,34 @@ const EducationServicesPage: React.FC = () => {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newApplication: EducationApplication = {
-        id: Date.now().toString(),
+      const payload = {
+        type: 'EDUCATION_APPLICATION',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        studentName: applicationForm.studentName,
-        guardianName: applicationForm.guardianName,
-        level: applicationForm.level,
-        status: 'Submitted',
-        submissionDate: new Date().toISOString(),
-        referenceNumber: `EDU${Date.now()}`,
+        data: {
+          studentName: applicationForm.studentName,
+          guardianName: applicationForm.guardianName,
+          dateOfBirth: applicationForm.dateOfBirth,
+          address: applicationForm.address,
+          phone: applicationForm.phone,
+          email: applicationForm.email,
+          level: applicationForm.level,
+          previousSchool: applicationForm.previousSchool,
+          reason: applicationForm.reason,
+          additionalInfo: applicationForm.additionalInfo,
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newApplication: EducationApplication = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
+        studentName: created.data?.studentName || applicationForm.studentName,
+        guardianName: created.data?.guardianName || applicationForm.guardianName,
+        level: created.data?.level || applicationForm.level,
+        status: (created.status || 'Submitted') as EducationApplication['status'],
+        submissionDate: created.createdAt || new Date().toISOString(),
+        referenceNumber: created.reference || created.referenceNumber,
       };
 
       setApplications(prev => [newApplication, ...prev]);

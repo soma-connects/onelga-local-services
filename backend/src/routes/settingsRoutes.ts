@@ -9,8 +9,12 @@ const router = Router();
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
+// Combined Settings Routes (for frontend compatibility)
+router.get('/', (req: Request, res: Response) => settingsController.getAllSettings(req, res));
+router.put('/', (req: Request, res: Response) => settingsController.updateSettings(req, res));
+
 // User Settings Routes
-router.get('/user', settingsController.getUserSettings);
+router.get('/user', (req: Request, res: Response) => settingsController.getUserSettings(req, res));
 router.put(
   '/user',
   [
@@ -40,11 +44,11 @@ router.put(
       .withMessage('Compact mode must be a boolean'),
   ],
   validateRequest,
-  settingsController.updateUserSettings
+  (req: Request, res: Response) => settingsController.updateUserSettings(req, res)
 );
 
 // Notification Settings Routes
-router.get('/notifications', settingsController.getNotificationSettings);
+router.get('/notifications', (req: Request, res: Response) => settingsController.getNotificationSettings(req, res));
 router.put(
   '/notifications',
   [
@@ -102,11 +106,11 @@ router.put(
       .withMessage('Quiet hours end time must be in HH:MM format'),
   ],
   validateRequest,
-  settingsController.updateNotificationSettings
+  (req: Request, res: Response) => settingsController.updateNotificationSettings(req, res)
 );
 
 // Privacy Settings Routes
-router.get('/privacy', settingsController.getPrivacySettings);
+router.get('/privacy', (req: Request, res: Response) => settingsController.getPrivacySettings(req, res));
 router.put(
   '/privacy',
   [
@@ -140,11 +144,11 @@ router.put(
       .withMessage('Third party integrations must be a boolean'),
   ],
   validateRequest,
-  settingsController.updatePrivacySettings
+  (req: Request, res: Response) => settingsController.updatePrivacySettings(req, res)
 );
 
 // Security Settings Routes
-router.get('/security', settingsController.getSecuritySettings);
+router.get('/security', (req: Request, res: Response) => settingsController.getSecuritySettings(req, res));
 router.put(
   '/security',
   [
@@ -162,11 +166,11 @@ router.put(
       .withMessage('Session timeout must be between 5 and 1440 minutes'),
   ],
   validateRequest,
-  settingsController.updateSecuritySettings
+  (req: Request, res: Response) => settingsController.updateSecuritySettings(req, res)
 );
 
 // Data Management Routes
-router.get('/export-data', settingsController.exportUserData);
+router.get('/export-data', (req: Request, res: Response) => settingsController.exportUserData(req, res));
 router.post(
   '/delete-account',
   [
@@ -180,11 +184,11 @@ router.post(
       .withMessage('Reason must be a string with maximum 500 characters'),
   ],
   validateRequest,
-  settingsController.deleteAccount
+  (req: Request, res: Response) => settingsController.deleteAccount(req, res)
 );
 
 // Storage Routes
-router.get('/storage', settingsController.getStorageUsage);
+router.get('/storage', (req: Request, res: Response) => settingsController.getStorageUsage(req, res));
 
 // Utility Routes
 router.post(
@@ -195,25 +199,25 @@ router.post(
       .withMessage('Notification type must be email, sms, or push'),
   ],
   validateRequest,
-  settingsController.testNotification
+  (req: Request, res: Response) => settingsController.testNotification(req, res)
 );
 
 // Two-Factor Authentication Routes (Placeholder implementations)
-router.post('/2fa/enable', (_req, res) => {
+router.post('/2fa/enable', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Two-factor authentication is not yet implemented. Coming soon!',
   });
 });
 
-router.post('/2fa/disable', (_req, res) => {
+router.post('/2fa/disable', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Two-factor authentication is not yet implemented. Coming soon!',
   });
 });
 
-router.post('/2fa/verify', (_req, res) => {
+router.post('/2fa/verify', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Two-factor authentication is not yet implemented. Coming soon!',
@@ -221,21 +225,21 @@ router.post('/2fa/verify', (_req, res) => {
 });
 
 // Session Management Routes (Placeholder implementations)
-router.get('/sessions', (_req, res) => {
+router.get('/sessions', (_req: Request, res: Response) => {
   res.json({
     success: true,
     data: [], // Return empty array for now
   });
 });
 
-router.post('/sessions/logout-all', (_req, res) => {
+router.post('/sessions/logout-all', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Session management is not yet implemented. Coming soon!',
   });
 });
 
-router.delete('/sessions/:deviceId', (_req, res) => {
+router.delete('/sessions/:deviceId', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Session management is not yet implemented. Coming soon!',
@@ -268,14 +272,14 @@ router.get(
 );
 
 // Backup and Restore Routes (Placeholder implementations)
-router.post('/backup', (_req, res) => {
+router.post('/backup', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Backup functionality is not yet implemented. Coming soon!',
   });
 });
 
-router.post('/restore', (_req, res) => {
+router.post('/restore', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Restore functionality is not yet implemented. Coming soon!',
@@ -283,14 +287,14 @@ router.post('/restore', (_req, res) => {
 });
 
 // Email Verification Routes (Placeholder implementations)
-router.post('/verify-email', (_req, res) => {
+router.post('/verify-email', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Email verification resend is not yet implemented. Coming soon!',
   });
 });
 
-router.post('/verify-email/confirm', (_req, res) => {
+router.post('/verify-email/confirm', (_req: Request, res: Response) => {
   res.json({
     success: false,
     message: 'Email verification confirmation is not yet implemented. Coming soon!',

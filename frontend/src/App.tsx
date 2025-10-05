@@ -36,6 +36,8 @@ import SocialSecurityPage from './pages/services/SocialSecurityPage';
 import EducationServicesPage from './pages/services/EducationServicesPage';
 import HousingServicesPage from './pages/services/HousingServicesPage';
 import NotFoundPage from './pages/NotFoundPage';
+import NewsPage from './pages/NewsPage';
+import ArticlePage from './pages/ArticlePage';
 
 import './App.css';
 
@@ -95,6 +97,8 @@ function AppContent() {
             </ProtectedRoute>
           } />
           <Route path="/services" element={<ServicesPage />} />
+          <Route path="/news" element={<NewsPage />} />
+          <Route path="/news/:slug" element={<ArticlePage />} />
           <Route path="/profile" element={
             <ProtectedRoute>
               <ProfilePage />

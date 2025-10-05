@@ -237,47 +237,12 @@ const ModernOfficialDashboard: React.FC = () => {
     }
   };
 
-  // Generate mock data for charts
-  const getWorkloadTrendData = () => {
-    const last30Days = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
-      return {
-        date: date.toISOString().slice(5, 10), // MM-DD format
-        assigned: Math.floor(Math.random() * 8) + 2,
-        completed: Math.floor(Math.random() * 6) + 1,
-        pending: Math.floor(Math.random() * 4) + 1,
-      };
-    });
-    return last30Days;
-  };
+  // Chart data: hide charts when data is not available from backend
+  const getWorkloadTrendData = () => [] as Array<{ date: string; assigned: number; completed: number; pending: number }>;
 
-  const getServiceDistributionData = () => {
-    const services = [
-      { name: 'ID Letters', value: 35 },
-      { name: 'Birth Certificates', value: 28 },
-      { name: 'Business Registration', value: 22 },
-      { name: 'Health Services', value: 15 },
-      { name: 'Transport', value: 12 },
-      { name: 'Education', value: 8 },
-      { name: 'Housing', value: 6 },
-      { name: 'Social Services', value: 4 },
-    ];
-    return services;
-  };
+  const getServiceDistributionData = () => [] as Array<{ name: string; value: number }>;
 
-  const getProcessingTimeData = () => {
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return {
-        date: date.toISOString().slice(5, 10), // MM-DD format
-        avgProcessingTime: Math.floor(Math.random() * 3) + 1.5,
-        target: 3,
-      };
-    });
-    return last7Days;
-  };
+  const getProcessingTimeData = () => [] as Array<{ date: string; avgProcessingTime: number; target: number }>;
 
   const getStatusColor = (status: string, urgency?: string) => {
     if (urgency === 'high') return 'error';

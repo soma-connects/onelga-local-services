@@ -3,22 +3,14 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/db';
 import { logger } from '../utils/logger';
 
-
-
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-    lastName: string;
-    isVerified: boolean;
-  };
+// Extend Request interface to include user property
+interface RequestWithUser extends Request {
+  user?: any;
 }
 
 // JWT Authentication middleware
 export const authenticateToken = async (
-  req: AuthRequest,
+  req: RequestWithUser,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -57,6 +49,9 @@ export const authenticateToken = async (
         role: true,
         isVerified: true,
         isActive: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -77,7 +72,7 @@ export const authenticateToken = async (
     }
 
     // Attach user to request
-    req.user = user;
+    req.user = user as any;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -107,7 +102,7 @@ export const authenticateToken = async (
 
 // Role-based authorization middleware
 export const authorizeRoles = (...allowedRoles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+  return (req: RequestWithUser, res: Response, next: NextFunction): void => {
     if (!req.user) {
       res.status(401).json({
         success: false,
@@ -130,7 +125,7 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
 
 // Email verification middleware
 export const requireEmailVerification = (
-  req: AuthRequest,
+  req: RequestWithUser,
   res: Response,
   next: NextFunction
 ): void => {
@@ -155,7 +150,7 @@ export const requireEmailVerification = (
 
 // Optional authentication middleware (doesn't fail if no token)
 export const optionalAuth = async (
-  req: AuthRequest,
+  req: RequestWithUser,
   _res: Response,
   next: NextFunction
 ): Promise<void> => {
@@ -179,11 +174,14 @@ export const optionalAuth = async (
         role: true,
         isVerified: true,
         isActive: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
     if (user && user.isActive) {
-      req.user = user;
+      req.user = user as any;
     }
   } catch (error) {
     // Silently fail for optional auth

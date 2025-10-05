@@ -190,33 +190,39 @@ const initialState: SettingsState = {
 };
 
 // Settings reducer
-const settingsReducer = (state: SettingsState, action: SettingsAction): SettingsState => {
+const settingsReducer = (state: SettingsState = initialState, action: SettingsAction): SettingsState => {
   switch (action.type) {
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_SAVING':
       return { ...state, isSaving: action.payload };
-    case 'SET_USER_SETTINGS':
-      const effectiveMode = getEffectiveThemeMode(action.payload.theme);
+    case 'SET_USER_SETTINGS': {
+      // Merge incoming settings with existing to avoid undefined fields
+      const incoming: Partial<UserSettings> = (action as any).payload ?? {};
+      const merged = { ...state.userSettings, ...incoming } as UserSettings;
+      const effectiveMode = getEffectiveThemeMode(merged.theme);
       return {
         ...state,
-        userSettings: action.payload,
-        theme: createAppTheme(effectiveMode, action.payload.fontSize),
+        userSettings: merged,
+        theme: createAppTheme(effectiveMode, merged.fontSize),
       };
+    }
     case 'SET_NOTIFICATION_SETTINGS':
       return { ...state, notificationSettings: action.payload };
     case 'SET_PRIVACY_SETTINGS':
       return { ...state, privacySettings: action.payload };
     case 'SET_SECURITY_SETTINGS':
       return { ...state, securitySettings: action.payload };
-    case 'UPDATE_THEME':
-      const newMode = action.payload.mode || state.userSettings.theme;
-      const newFontSize = action.payload.fontSize || state.userSettings.fontSize;
+    case 'UPDATE_THEME': {
+      const payload: Partial<{ mode: 'light' | 'dark' | 'system'; fontSize: string }> = (action as any).payload ?? {};
+      const newMode = payload.mode ?? state.userSettings?.theme ?? defaultUserSettings.theme;
+      const newFontSize = payload.fontSize ?? state.userSettings?.fontSize ?? defaultUserSettings.fontSize;
       const newEffectiveMode = getEffectiveThemeMode(newMode);
       return {
         ...state,
         theme: createAppTheme(newEffectiveMode, newFontSize),
       };
+    }
     default:
       return state;
   }

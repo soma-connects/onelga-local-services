@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -91,6 +91,7 @@ import {
   Psychology,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI, documentsAPI } from '../../services/api';
 
 interface SocialService {
   id: string;
@@ -175,6 +176,7 @@ const SocialSecurityPage: React.FC = () => {
     email: '',
     address: '',
   stateOfOrigin: '',
+    lgaOfOrigin: '',
     
     // Household Information
     householdSize: '',
@@ -207,294 +209,95 @@ const SocialSecurityPage: React.FC = () => {
     supportingDocuments: [] as string[],
   });
 
-  // Mock social services data
-  const socialServices: SocialService[] = [
-    {
-      id: '1',
-      name: 'Monthly Welfare Allowance',
-      description: 'Monthly financial assistance for low-income families and individuals',
-      category: 'Welfare Programs',
-      eligibilityCriteria: [
-        'Monthly household income below ₦50,000',
-        'Nigerian citizen or legal resident',
-        'Age 18 years and above',
-        'No other active welfare benefits'
-      ],
-      benefits: [
-        'Monthly cash allowance of ₦15,000-₦25,000',
-        'Healthcare vouchers',
-        'Food assistance coupons',
-        'Educational support for children'
-      ],
-      requirements: [
-        'Valid means of identification',
-        'Proof of income or unemployment',
-        'Bank account details',
-        'Household assessment report'
-      ],
-      processingTime: '4-6 weeks',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '2',
-      name: 'Disability Support Program',
-      description: 'Comprehensive support services for persons with disabilities',
-      category: 'Disability Support',
-      eligibilityCriteria: [
-        'Certified disability assessment',
-        'Nigerian citizen',
-        'Resident of Onelga LGA',
-        'Unable to engage in substantial gainful activity'
-      ],
-      benefits: [
-        'Monthly disability allowance (₦20,000-₦35,000)',
-        'Free medical care',
-        'Assistive devices and equipment',
-        'Vocational rehabilitation services',
-        'Transportation assistance'
-      ],
-      requirements: [
-        'Medical assessment report',
-        'Disability certificate',
-        'Valid identification',
-        'Bank account details'
-      ],
-      processingTime: '6-8 weeks',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '3',
-      name: 'Senior Citizens Care Program',
-      description: 'Support services and benefits for elderly citizens aged 65 and above',
-      category: 'Elderly Care',
-      eligibilityCriteria: [
-        'Age 65 years and above',
-        'Nigerian citizen',
-        'Resident of Onelga LGA for minimum 10 years',
-        'Limited income and support'
-      ],
-      benefits: [
-        'Monthly pension supplement (₦18,000)',
-        'Free healthcare services',
-        'Home care assistance',
-        'Social activities and programs',
-        'Transportation vouchers'
-      ],
-      requirements: [
-        'Birth certificate or age declaration',
-        'Valid identification',
-        'Proof of residence',
-        'Medical fitness report'
-      ],
-      processingTime: '3-4 weeks',
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '4',
-      name: 'Child Welfare & Protection',
-      description: 'Support services for vulnerable children and families',
-      category: 'Child Support',
-      eligibilityCriteria: [
-        'Children under 18 years',
-        'At-risk or vulnerable situations',
-        'Family in financial hardship',
-        'Orphaned or abandoned children'
-      ],
-      benefits: [
-        'Monthly child support allowance',
-        'Educational scholarships',
-        'Healthcare coverage',
-        'Foster care services',
-        'Child protection services'
-      ],
-      requirements: [
-        'Child\'s birth certificate',
-        'Guardian identification',
-        'Vulnerability assessment',
-        'School enrollment proof (if applicable)'
-      ],
-      processingTime: '2-4 weeks',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '5',
-      name: 'Healthcare Assistance Program',
-      description: 'Medical care support for low-income individuals and families',
-      category: 'Healthcare Assistance',
-      eligibilityCriteria: [
-        'Low-income household',
-        'No health insurance coverage',
-        'Chronic medical conditions',
-        'Nigerian citizen'
-      ],
-      benefits: [
-        'Free primary healthcare',
-        'Subsidized medications',
-        'Medical equipment loans',
-        'Emergency medical assistance',
-        'Health screening programs'
-      ],
-      requirements: [
-        'Medical assessment',
-        'Income verification',
-        'Valid identification',
-        'Medical history documents'
-      ],
-      processingTime: '1-2 weeks',
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '6',
-      name: 'Educational Support Scheme',
-      description: 'Educational assistance for underprivileged students',
-      category: 'Education Support',
-      eligibilityCriteria: [
-        'Students from low-income families',
-        'Academic merit or potential',
-        'Enrolled in recognized institutions',
-        'Nigerian citizen'
-      ],
-      benefits: [
-        'School fees assistance',
-        'Learning materials and uniforms',
-        'Transportation allowance',
-        'Meal programs',
-        'Tutorial support'
-      ],
-      requirements: [
-        'Academic transcripts',
-        'School enrollment letter',
-        'Family income proof',
-        'Student identification'
-      ],
-      processingTime: '3-4 weeks',
-      status: 'Seasonal',
-      priority: 'Medium'
-    },
-    {
-      id: '7',
-      name: 'Housing Support Program',
-      description: 'Housing assistance for homeless and low-income individuals',
-      category: 'Housing Assistance',
-      eligibilityCriteria: [
-        'Homeless or inadequate housing',
-        'Low-income household',
-        'Nigerian citizen',
-        'No property ownership'
-      ],
-      benefits: [
-        'Temporary shelter accommodation',
-        'Rental assistance vouchers',
-        'Home improvement grants',
-        'Housing counseling services',
-        'Utility bill assistance'
-      ],
-      requirements: [
-        'Housing needs assessment',
-        'Income verification',
-        'Valid identification',
-        'Character references'
-      ],
-      processingTime: '2-3 weeks',
-      status: 'Limited',
-      priority: 'High'
-    },
-    {
-      id: '8',
-      name: 'Employment & Skills Program',
-      description: 'Job training and employment support for unemployed citizens',
-      category: 'Employment Support',
-      eligibilityCriteria: [
-        'Unemployed for 6+ months',
-        'Age 18-55 years',
-        'Nigerian citizen',
-        'Willingness to participate in training'
-      ],
-      benefits: [
-        'Vocational skills training',
-        'Job placement assistance',
-        'Entrepreneurship support',
-        'Start-up business loans',
-        'Career counseling'
-      ],
-      requirements: [
-        'Educational certificates',
-        'Valid identification',
-        'Employment history',
-        'Skills assessment test'
-      ],
-      processingTime: '1-2 weeks',
-      status: 'Available',
-      priority: 'Medium'
-    }
-  ];
+  const [socialServices, setSocialServices] = useState<SocialService[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<Array<{ id: string; name: string }>>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [programs, setPrograms] = useState<Array<{ id: string; name: string; type: string; description: string; status: 'Open' | 'Waitlist' | 'Closed' | 'Coming Soon'; benefits: string[]; eligibility: string[]; applicationDeadline?: string }>>([]);
 
-  // Mock applications data
-  React.useEffect(() => {
-    const mockApplications: SocialApplication[] = [
+  // Load services and applications from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('social'))
+          .map((s: any): SocialService => {
+            const st = (s.status || 'Available').toString().toLowerCase();
+            const statusMap: Record<string, SocialService['status']> = {
+              available: 'Available',
+              'temporarily_unavailable': 'Suspended',
+              coming_soon: 'Seasonal',
+            };
+            return {
+              id: s.id?.toString() || s._id?.toString() || s.name,
+              name: s.name || s.title || 'Service',
+              description: s.description || 'No description provided.',
+              category: (s.category || 'Welfare Programs') as any,
+              eligibilityCriteria: Array.isArray(s.eligibility) ? s.eligibility : [],
+              benefits: Array.isArray(s.benefits) ? s.benefits : [],
+              requirements: Array.isArray(s.requirements) ? s.requirements : [],
+              processingTime: s.processingTime || s.sla || '2-4 weeks',
+              status: statusMap[st] || 'Available',
+              priority: s.priority || undefined,
+            };
+          });
+        setSocialServices(normalized);
+      } catch (e) {
+        setSocialServices([]);
+      }
+    };
+    const loadApplications = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'COMPLAINT', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: SocialApplication[] = apps.map((app: any) => ({
+          id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+          serviceId: app.serviceId || app.type || 'social',
+          serviceName: app.serviceName || app.type || 'Social Service',
+          applicantName: app.data?.applicantName || '-',
+          applicationDate: (app.createdAt || new Date()).toString(),
+          status: (app.status || 'Submitted') as SocialApplication['status'],
+          referenceNumber: app.reference || app.referenceNumber,
+          benefitAmount: app.data?.benefitAmount,
+          startDate: app.data?.startDate,
+          endDate: app.data?.endDate,
+          reviewDate: app.data?.reviewDate,
+          caseworker: app.caseworker,
+          notes: app.notes,
+        }));
+        setApplications(mapped);
+      } catch (e) {
+        setApplications([]);
+      }
+      setBeneficiaries([]);
+    };
+    loadServices();
+    loadApplications();
+    // Fallback programs
+    setPrograms([
       {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'Monthly Welfare Allowance',
-        applicantName: 'John Doe',
-        applicationDate: '2024-01-15',
-        status: 'Active',
-        referenceNumber: 'SW2024001',
-        benefitAmount: 20000,
-        startDate: '2024-02-01',
-        reviewDate: '2024-08-01',
-        caseworker: 'Mrs. Sarah Johnson'
+        id: 'ssp-1',
+        name: 'Vulnerable Support Program',
+        type: 'Welfare',
+        description: 'Monthly support for vulnerable households in ONELGA.',
+        status: 'Open',
+        benefits: ['Monthly cash support', 'Food assistance'],
+        eligibility: ['Resident of ONELGA', 'Household income assessment'],
+        applicationDeadline: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
       },
       {
-        id: '2',
-        serviceId: '3',
-        serviceName: 'Senior Citizens Care Program',
-        applicantName: 'Mary Johnson',
-        applicationDate: '2024-01-20',
-        status: 'Under Review',
-        referenceNumber: 'SC2024002',
-        caseworker: 'Mr. David Wilson'
-      }
-    ];
-    setApplications(mockApplications);
-
-    // Mock beneficiaries data
-    const mockBeneficiaries: Beneficiary[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        idNumber: '12345678901',
-        phoneNumber: '+2348012345678',
-        address: '123 Main Street, Ndoni',
-        dateOfBirth: '1985-05-15',
-        gender: 'Male',
-        maritalStatus: 'Married',
-        householdSize: 4,
-        monthlyIncome: 35000,
-        employmentStatus: 'Part-time',
-        dependents: 2,
-        emergencyContact: {
-          name: 'Jane Doe',
-          relationship: 'Spouse',
-          phone: '+2348087654321'
-        },
-        activePrograms: [
-          {
-            programId: '1',
-            programName: 'Monthly Welfare Allowance',
-            startDate: '2024-02-01',
-            monthlyBenefit: 20000,
-            status: 'Active'
-          }
-        ]
-      }
-    ];
-    setBeneficiaries(mockBeneficiaries);
+        id: 'ssp-2',
+        name: 'Disability Aid Package',
+        type: 'Disability Support',
+        description: 'Assistance and accessibility support for persons with disabilities.',
+        status: 'Coming Soon',
+        benefits: ['Medical support', 'Assistive devices'],
+        eligibility: ['Valid disability documentation', 'Resident of ONELGA'],
+      },
+    ]);
   }, []);
 
   // Form handlers
@@ -514,7 +317,7 @@ const SocialSecurityPage: React.FC = () => {
   };
 
   const handleNext = () => {
-    if (applicationStep < 3) {
+    if (applicationStep < 4) {
       setApplicationStep(applicationStep + 1);
     } else {
       handleSubmitApplication();
@@ -531,12 +334,29 @@ const SocialSecurityPage: React.FC = () => {
     if (!selectedService) return;
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newApplication: SocialApplication = {
-        id: Date.now().toString(),
+      const payload = {
+        type: selectedService.name?.toLowerCase().includes('complaint') ? 'COMPLAINT' : 'SOCIAL_SERVICE',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
+        data: {
+          applicantName: `${applicationForm.firstName} ${applicationForm.lastName}`.trim(),
+          idNumber: applicationForm.idNumber,
+          phoneNumber: applicationForm.phoneNumber,
+          email: applicationForm.email,
+          address: applicationForm.address,
+          householdSize: applicationForm.householdSize,
+          dependents: applicationForm.dependents,
+          monthlyIncome: applicationForm.monthlyIncome,
+          employmentStatus: applicationForm.employmentStatus,
+          reasonForApplication: applicationForm.reasonForApplication,
+          documents: uploadedDocs.map(d => d.id),
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newApplication: SocialApplication = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
         applicantName: `${applicationForm.firstName} ${applicationForm.lastName}`,
         applicationDate: new Date().toISOString().split('T')[0],
         status: 'Submitted',
@@ -569,6 +389,9 @@ const SocialSecurityPage: React.FC = () => {
       emergencyContactName: '', emergencyContactRelationship: '', emergencyContactPhone: '',
       reasonForApplication: '', previousApplications: '', supportingDocuments: []
     });
+    setUploadedDocs([]);
+    setSelectedFile(null);
+    setUploadingDoc(false);
   };
 
   const getStatusColor = (status: string) => {
@@ -936,7 +759,7 @@ const SocialSecurityPage: React.FC = () => {
   );
 
   const renderApplicationSteps = () => {
-    const steps = ['Personal Info', 'Household Details', 'Financial Info', 'Review & Submit'];
+    const steps = ['Personal Info', 'Household Details', 'Financial Info', 'Documents', 'Review & Submit'];
     
     return (
       <Box>
@@ -1119,7 +942,48 @@ const SocialSecurityPage: React.FC = () => {
           </Grid>
         )}
 
-        {applicationStep === 3 && selectedService && (
+        {applicationStep === 3 && (
+          <Box>
+            <Typography variant="h6" gutterBottom>Upload Supporting Documents</Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>Accepted: PDF, JPG, PNG. Max 10MB per file.</Alert>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+              <Button variant="outlined" component="label" startIcon={<Upload />}>
+                Select File
+                <input type="file" hidden onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} accept=".pdf,.jpg,.jpeg,.png" />
+              </Button>
+              <Button variant="contained" disabled={!selectedFile || uploadingDoc} onClick={async () => {
+                if (!selectedFile) return;
+                try {
+                  setUploadingDoc(true);
+                  const res = await documentsAPI.upload(selectedFile);
+                  const doc = (res as any).data || res;
+                  setUploadedDocs(prev => [...prev, { id: doc.id, name: doc.name }]);
+                  setSelectedFile(null);
+                  toast.success('Document uploaded');
+                } catch (e) {
+                  toast.error('Failed to upload document');
+                } finally {
+                  setUploadingDoc(false);
+                }
+              }}>Upload</Button>
+            </Stack>
+            {uploadedDocs.length > 0 && (
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>Uploaded</Typography>
+                <List dense>
+                  {uploadedDocs.map((d) => (
+                    <ListItem key={d.id} sx={{ py: 0 }}>
+                      <ListItemIcon><Description /></ListItemIcon>
+                      <ListItemText primary={d.name} secondary={d.id} />
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+          </Box>
+        )}
+
+        {applicationStep === 4 && selectedService && (
           <Box>
             <Alert severity="info" sx={{ mb: 3 }}>
               Please review your application details before submitting.
@@ -1142,6 +1006,74 @@ const SocialSecurityPage: React.FC = () => {
     );
   };
 
+  const renderPrograms = () => (
+    <Grid container spacing={3}>
+      {programs.map((program) => (
+        <Grid item xs={12} md={6} key={program.id}>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Group />
+                <Box sx={{ ml: 1, flexGrow: 1 }}>
+                  <Typography variant="h6" component="h3">{program.name}</Typography>
+                  <Typography variant="caption" color="text.secondary">{program.type}</Typography>
+                </Box>
+                <Chip label={program.status} size="small" color={program.status === 'Open' ? 'success' : program.status === 'Waitlist' ? 'warning' : 'default'} />
+              </Box>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                {program.description}
+              </Typography>
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="body2" fontWeight="medium">Benefits & Eligibility</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>Benefits:</Typography>
+                  <List dense>
+                    {program.benefits.map((b, i) => (
+                      <ListItem key={i} sx={{ py: 0 }}><ListItemText primary={`• ${b}`} primaryTypographyProps={{ variant: 'body2' }} /></ListItem>
+                    ))}
+                  </List>
+                  <Typography variant="caption" color="text.secondary" gutterBottom>Eligibility:</Typography>
+                  <List dense>
+                    {program.eligibility.map((e, i) => (
+                      <ListItem key={i} sx={{ py: 0 }}><ListItemText primary={`• ${e}`} primaryTypographyProps={{ variant: 'body2' }} /></ListItem>
+                    ))}
+                  </List>
+                </AccordionDetails>
+              </Accordion>
+            </CardContent>
+            <CardActions>
+              <Button
+                size="small"
+                startIcon={<PersonAdd />}
+                disabled={program.status !== 'Open'}
+                onClick={() => {
+                  // Reuse service application flow by seeding a pseudo-service
+                  setSelectedService({
+                    id: program.id,
+                    name: program.name,
+                    description: program.description,
+                    category: 'Welfare Programs',
+                    eligibilityCriteria: program.eligibility,
+                    benefits: program.benefits,
+                    requirements: [],
+                    processingTime: '2-4 weeks',
+                    status: 'Available',
+                  } as any);
+                  setShowApplicationDialog(true);
+                }}
+              >
+                Apply
+              </Button>
+              <Button size="small" startIcon={<Visibility />}>Learn More</Button>
+            </CardActions>
+          </Card>
+        </Grid>
+      ))}
+    </Grid>
+  );
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
@@ -1161,6 +1093,7 @@ const SocialSecurityPage: React.FC = () => {
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={selectedTab} onChange={(e, newValue) => setSelectedTab(newValue)} aria-label="social security tabs">
           <Tab icon={<Security />} label="Services" />
+          <Tab icon={<Group />} label="Programs" />
           <Tab icon={<Assignment />} label="My Applications" />
           <Tab icon={<Group />} label="Beneficiaries" />
         </Tabs>
@@ -1168,8 +1101,9 @@ const SocialSecurityPage: React.FC = () => {
 
       {/* Tab Content */}
       {selectedTab === 0 && renderServices()}
-      {selectedTab === 1 && renderApplications()}
-      {selectedTab === 2 && renderBeneficiaries()}
+      {selectedTab === 1 && renderPrograms()}
+      {selectedTab === 2 && renderApplications()}
+      {selectedTab === 3 && renderBeneficiaries()}
 
       {/* Application Dialog */}
       <Dialog

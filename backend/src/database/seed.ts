@@ -8,13 +8,13 @@ async function main() {
   logger.info('🌱 Starting database seeding...');
 
   // Create admin user
-  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || 'admin123', 12);
+  const adminPassword = await bcrypt.hash(process.env['ADMIN_PASSWORD'] || 'admin123', 12);
   
   const admin = await prisma.user.upsert({
-    where: { email: process.env.ADMIN_EMAIL || 'admin@onelga.gov.ng' },
+    where: { email: process.env['ADMIN_EMAIL'] || 'admin@onelga.gov.ng' },
     update: {},
     create: {
-      email: process.env.ADMIN_EMAIL || 'admin@onelga.gov.ng',
+      email: process.env['ADMIN_EMAIL'] || 'admin@onelga.gov.ng',
       firstName: 'System',
       lastName: 'Administrator',
       password: adminPassword,
@@ -68,43 +68,48 @@ async function main() {
 
   logger.info('🏥 Health centers created/updated');
 
-  // Create sample staff users
+  // Create sample service staff users (role: STAFF) and assign service restrictions
   const staffUsers = [
     {
-      email: 'health.staff@onelga.gov.ng',
-      firstName: 'Health',
+      email: 'ident.staff@onelga.gov.ng',
+      firstName: 'Identification',
       lastName: 'Staff',
-      role: 'HEALTH_STAFF' as const,
+      staffService: 'IDENTIFICATION_LETTER',
     },
     {
-      email: 'business.staff@onelga.gov.ng',
-      firstName: 'Business',
+      email: 'birth.staff@onelga.gov.ng',
+      firstName: 'Birth',
       lastName: 'Staff',
-      role: 'BUSINESS_STAFF' as const,
-    },
-    {
-      email: 'education.staff@onelga.gov.ng',
-      firstName: 'Education',
-      lastName: 'Staff',
-      role: 'EDUCATION_STAFF' as const,
+      staffService: 'BIRTH_CERTIFICATE',
     },
   ];
 
   const defaultStaffPassword = await bcrypt.hash('staff123', 12);
 
   for (const staff of staffUsers) {
-    await prisma.user.upsert({
+    const created = await prisma.user.upsert({
       where: { email: staff.email },
       update: {},
       create: {
-        ...staff,
+        email: staff.email,
+        firstName: staff.firstName,
+        lastName: staff.lastName,
         password: defaultStaffPassword,
+        role: 'STAFF',
         isVerified: true,
+        staffService: staff.staffService,
       },
+    });
+
+    // Ensure ServiceAssignment exists for this staff and service
+    await prisma.serviceAssignment.upsert({
+      where: { userId_serviceType: { userId: created.id, serviceType: staff.staffService } },
+      update: {},
+      create: { userId: created.id, serviceType: staff.staffService },
     });
   }
 
-  logger.info('👥 Staff users created/updated');
+  logger.info('👥 Service staff users created/updated and assigned to services');
 
   // Create sample citizen for testing
   const citizenPassword = await bcrypt.hash('citizen123', 12);
@@ -150,7 +155,7 @@ async function main() {
   logger.info('✅ Database seeding completed successfully!');
   
   console.log('\n=== Seeded Users ===');
-  console.log(`Admin: ${admin.email} (password: ${process.env.ADMIN_PASSWORD || 'admin123'})`);
+  console.log(`Admin: ${admin.email} (password: ${process.env['ADMIN_PASSWORD'] || 'admin123'})`);
   console.log(`Citizen: citizen@example.com (password: citizen123)`);
   console.log(`Staff users: staff123 (password for all staff)`);
   console.log('\n=== Health Centers ===');

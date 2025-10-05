@@ -43,6 +43,14 @@ router.use(authenticateToken);
  *       401:
  *         description: Authentication required
  */
+// Generate unique reference number
+const generateReferenceNumber = (type: string): string => {
+  const prefix = type.substring(0, 3).toUpperCase();
+  const year = new Date().getFullYear();
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `${prefix}-${year}-${random}`;
+};
+
 router.post('/applications', [
   body('type').isString().withMessage('Application type is required'),
   body('data').optional().isObject().withMessage('Data must be an object')
@@ -50,11 +58,15 @@ router.post('/applications', [
   try {
     const { type, data } = req.body;
     
+    // Generate unique reference number
+    const referenceNumber = generateReferenceNumber(type);
+    
     // Create application
     const application = await prisma.application.create({
       data: {
         userId: req.user!.id,
         type,
+        referenceNumber,
         data: data ? JSON.stringify(data) : null,
         status: 'PENDING'
       }

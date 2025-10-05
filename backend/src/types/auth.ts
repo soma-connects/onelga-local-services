@@ -8,7 +8,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'CITIZEN' | 'ADMIN' | 'STAFF';
+  role: 'CITIZEN' | 'ADMIN' | 'STAFF' | 'OFFICIAL';
   isVerified: boolean;
   isActive: boolean;
   status: 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
@@ -22,6 +22,7 @@ export interface User {
   permissions?: string[];
   department?: string; // For admin and staff roles
   employeeId?: string; // For admin and staff roles
+  staffService?: string; // Canonical application type for staff (e.g., BIRTH_CERTIFICATE)
 }
 
 // JWT payload interface
@@ -34,10 +35,8 @@ export interface JWTPayload {
 }
 
 // Extended Request interface with user
-export interface AuthRequest<T = any, P extends ParamsDictionary = ParamsDictionary> extends Request {
+export interface AuthRequest<T = any, P = ParamsDictionary> extends Request<P, any, T> {
   user?: User;
-  body: T;
-  params: P;
 }
 
 // Authentication response interface
@@ -67,7 +66,7 @@ export interface RegisterRequest {
   phoneNumber?: string;
   dateOfBirth?: string;
   address?: string;
-  role?: 'CITIZEN' | 'ADMIN' | 'STAFF';
+  role?: 'CITIZEN' | 'ADMIN' | 'STAFF' | 'OFFICIAL';
 }
 
 // Password change request interface
@@ -87,7 +86,7 @@ export interface UpdateProfileRequest {
 }
 
 // Role-based access control types
-export type UserRole = 'CITIZEN' | 'ADMIN' | 'STAFF';
+export type UserRole = 'CITIZEN' | 'ADMIN' | 'STAFF' | 'OFFICIAL';
 
 export type Permission = 
   | 'READ_APPLICATIONS'
@@ -119,6 +118,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'MANAGE_SERVICES',
     'MANAGE_PAYMENTS',
     'MANAGE_NOTIFICATIONS',
+  ],
+  OFFICIAL: [
+    'READ_APPLICATIONS',
+    'READ_USERS',
+    'READ_ANALYTICS',
+    'VIEW_AUDIT_LOGS',
   ],
   ADMIN: [
     'READ_APPLICATIONS',

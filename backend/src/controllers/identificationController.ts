@@ -2,7 +2,6 @@ import { Response } from 'express';
 import { logger } from '../utils/logger';
 import { AuthRequest } from '../types/auth';
 import { prisma } from '../lib/db';
-import { prisma } from '../lib/db';
 import { sendApplicationStatusEmail } from '../utils/emailService';
 import { logAudit } from '../utils/auditLogger';
 
@@ -22,7 +21,7 @@ interface IdentificationLetterBody {
   [key: string]: any;
 }
 
-interface IdParam {
+interface IdParam extends Record<string, string> {
   id: string;
 }
 
@@ -94,16 +93,52 @@ export const getUserApplications = async (req: AuthRequest, res: Response): Prom
       });
     }
 
-    // Placeholder implementation
+    const userId = req.user.id;
+    const {
+      page = '1',
+      limit = '10',
+      status,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query as any;
+
+    const pageNum = Math.max(parseInt(page), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit), 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {
+      userId,
+      type: 'IDENTIFICATION_LETTER',
+    };
+    if (status) where.status = status;
+
+    const [applications, totalCount] = await Promise.all([
+      prisma.application.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limitNum,
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          data: true,
+        },
+      }),
+      prisma.application.count({ where }),
+    ]);
+
     return res.json({
       success: true,
       data: {
-        applications: [],
+        applications,
         pagination: {
-          current: 1,
-          total: 0,
-          count: 0,
-          totalCount: 0,
+          current: pageNum,
+          total: Math.ceil(totalCount / limitNum),
+          count: applications.length,
+          totalCount,
         },
       },
     });
@@ -127,19 +162,39 @@ export const getApplicationById = async (req: AuthRequest<any, IdParam>, res: Re
     }
 
     const { id } = req.params;
-    
     if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'Application ID is required',
-      });
+      return res.status(400).json({ success: false, message: 'Application ID is required' });
     }
 
-    // Placeholder implementation
-    return res.status(404).json({
-      success: false,
-      message: 'Application not found',
+    // Fetch the application and ensure it's an identification letter
+    const application = await prisma.application.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        documents: { select: { id: true, name: true, mimeType: true, sizeBytes: true, uploadedAt: true } },
+      },
     });
+
+    if (!application || application.type !== 'IDENTIFICATION_LETTER') {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+
+    // Authorization: owner or ADMIN/STAFF can view
+    if (application.userId !== req.user.id && !['ADMIN', 'STAFF'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    return res.json({ success: true, data: {
+      id: application.id,
+      userId: application.userId,
+      user: application.user,
+      type: application.type,
+      status: application.status,
+      createdAt: application.createdAt,
+      updatedAt: application.updatedAt,
+      data: application.data,
+      documents: application.documents,
+    }});
   } catch (error) {
     logger.error('Get application by ID error:', error);
     return res.status(500).json({
@@ -150,18 +205,76 @@ export const getApplicationById = async (req: AuthRequest<any, IdParam>, res: Re
 };
 
 // Admin: Get all applications (with filters)
-export const getAllApplications = async (_req: AuthRequest, res: Response): Promise<Response> => {
+export const getAllApplications = async (req: AuthRequest, res: Response): Promise<Response> => {
   try {
-    // Placeholder implementation
+    if (!req.user || !['ADMIN', 'STAFF'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+
+    const {
+      page = '1',
+      limit = '10',
+      status,
+      search,
+      startDate,
+      endDate,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = req.query as any;
+
+    const pageNum = Math.max(parseInt(page), 1);
+    const limitNum = Math.min(Math.max(parseInt(limit), 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = { type: 'IDENTIFICATION_LETTER' };
+    if (status) where.status = status;
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+    if (search) {
+      where.OR = [
+        { referenceNumber: { contains: search, mode: 'insensitive' } },
+        { data: { contains: search, mode: 'insensitive' } },
+        { user: {
+          OR: [
+            { firstName: { contains: search, mode: 'insensitive' } },
+            { lastName: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ]
+        }},
+      ];
+    }
+
+    const [applications, totalCount] = await Promise.all([
+      prisma.application.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limitNum,
+        select: {
+          id: true,
+          type: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          data: true,
+          user: { select: { id: true, firstName: true, lastName: true, email: true } },
+        },
+      }),
+      prisma.application.count({ where }),
+    ]);
+
     return res.json({
       success: true,
       data: {
-        applications: [],
+        applications,
         pagination: {
-          current: 1,
-          total: 0,
-          count: 0,
-          totalCount: 0,
+          current: pageNum,
+          total: Math.ceil(totalCount / limitNum),
+          count: applications.length,
+          totalCount,
         },
       },
     });

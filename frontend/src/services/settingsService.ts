@@ -1,27 +1,39 @@
+import { apiService } from './api';
+
 const settingsService = {
   async changePassword({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) {
-    // Simulate API call
-    return Promise.resolve();
+    return apiService.put('/profile/change-password', { currentPassword, newPassword });
   },
+  
   async enable2FA() {
-    // Simulate API call
-    return Promise.resolve();
+    return apiService.post('/profile/2fa/enable');
   },
+  
   async disable2FA() {
-    // Simulate API call
-    return Promise.resolve();
+    return apiService.post('/profile/2fa/disable');
   },
+  
   async exportUserData() {
-    // Simulate API call
-    return Promise.resolve({});
+    const response = await apiService.get('/profile/export');
+    return response.data;
   },
+  
   async logoutAllDevices() {
-    // Simulate API call
-    return Promise.resolve();
+    return apiService.post('/auth/logout-all');
   },
+  
   async deleteAccount({ password, reason }: { password: string; reason: string }) {
-    // Simulate API call
-    return Promise.resolve();
+    return apiService.delete('/profile', {
+      data: { password, reason }
+    });
+  },
+  
+  async getSettings() {
+    return apiService.get('/settings');
+  },
+  
+  async updateSettings(settingsType: string, settings: any) {
+    return apiService.put('/settings', { type: settingsType, settings });
   },
 };
 

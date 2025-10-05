@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -79,6 +79,7 @@ import {
   Construction,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI } from '../../services/api';
 
 interface TaxService {
   id: string;
@@ -162,214 +163,37 @@ const TaxServicesPage: React.FC = () => {
 
   const [calculatedTax, setCalculatedTax] = useState(0);
 
-  // Mock tax services data
-  const taxServices: TaxService[] = [
-    {
-      id: '1',
-      name: 'Property Tax (Residential)',
-      description: 'Annual tax on residential properties based on assessed value',
-      category: 'Property Tax',
-      baseAmount: 5000,
-      calculationMethod: '0.5% of assessed property value (minimum ₦5,000)',
-      dueDate: '2024-12-31',
-      penalties: '5% monthly penalty after due date',
-      requirements: [
-        'Certificate of Occupancy',
-        'Property assessment report',
-        'Previous year tax receipt (if applicable)',
-        'Property photographs'
-      ],
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '2',
-      name: 'Property Tax (Commercial)',
-      description: 'Annual tax on commercial properties and business premises',
-      category: 'Property Tax',
-      baseAmount: 15000,
-      calculationMethod: '1% of assessed property value (minimum ₦15,000)',
-      dueDate: '2024-12-31',
-      penalties: '10% monthly penalty after due date',
-      requirements: [
-        'Certificate of Occupancy',
-        'Business registration certificate',
-        'Property assessment report',
-        'Business permit'
-      ],
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '3',
-      name: 'Business Registration Tax',
-      description: 'Annual tax for business registration and operation permit',
-      category: 'Business Tax',
-      baseAmount: 10000,
-      calculationMethod: 'Fixed rate based on business category',
-      dueDate: '2024-11-30',
-      penalties: '2% monthly penalty after due date',
-      requirements: [
-        'Business registration certificate',
-        'Tax identification number',
-        'Business permit',
-        'Financial statements (for large businesses)'
-      ],
-      status: 'Due Soon',
-      priority: 'High'
-    },
-    {
-      id: '4',
-      name: 'Vehicle Registration Tax',
-      description: 'Annual vehicle registration and road worthiness tax',
-      category: 'Vehicle Tax',
-      baseAmount: 8000,
-      calculationMethod: 'Based on vehicle type and engine capacity',
-      dueDate: '2024-10-31',
-      penalties: '₦500 daily penalty after due date',
-      requirements: [
-        'Vehicle registration document',
-        'Driver\'s license',
-        'Vehicle inspection certificate',
-        'Insurance certificate'
-      ],
-      status: 'Due Soon',
-      priority: 'Medium'
-    },
-    {
-      id: '5',
-      name: 'Development Levy',
-      description: 'Levy on new developments and construction projects',
-      category: 'Development Levy',
-      baseAmount: 50000,
-      calculationMethod: '₦500 per square meter of construction',
-      dueDate: 'Before construction begins',
-      penalties: 'Construction permit revocation',
-      requirements: [
-        'Building plan approval',
-        'Environmental impact assessment',
-        'Construction permit application',
-        'Site plan'
-      ],
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '6',
-      name: 'Market Trader Levy',
-      description: 'Daily/Monthly levy for market traders and shop owners',
-      category: 'Business Tax',
-      baseAmount: 200,
-      calculationMethod: '₦200 daily or ₦5,000 monthly',
-      dueDate: 'Daily/Monthly payment',
-      penalties: 'Shop closure after 3 days default',
-      requirements: [
-        'Shop/stall registration',
-        'Trader identification',
-        'Health certificate (for food vendors)',
-        'Fire safety compliance'
-      ],
-      status: 'Available',
-      priority: 'Low'
-    },
-    {
-      id: '7',
-      name: 'Land Use Charge',
-      description: 'Annual charge on land use and development rights',
-      category: 'Property Tax',
-      baseAmount: 2000,
-      calculationMethod: '0.2% of land value (minimum ₦2,000)',
-      dueDate: '2024-12-31',
-      penalties: '3% monthly penalty after due date',
-      requirements: [
-        'Land ownership document',
-        'Survey plan',
-        'Development plan (if applicable)',
-        'Previous payment receipt'
-      ],
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '8',
-      name: 'Signage and Advertisement Tax',
-      description: 'Tax on billboards, signages, and advertisement displays',
-      category: 'Business Tax',
-      baseAmount: 25000,
-      calculationMethod: 'Based on size and location of signage',
-      dueDate: 'Annual renewal',
-      penalties: 'Signage removal after default',
-      requirements: [
-        'Signage design approval',
-        'Location permit',
-        'Business registration',
-        'Insurance coverage'
-      ],
-      status: 'Available',
-      priority: 'Low'
-    }
-  ];
+  const [taxServices, setTaxServices] = useState<TaxService[]>([]);
 
-  // Mock data initialization
-  React.useEffect(() => {
-    const mockPayments: TaxPayment[] = [
-      {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'Property Tax (Residential)',
-        taxpayerName: 'Mr. Chinedu Okafor',
-        taxPayerID: 'OLG/TP/2024/001',
-        amount: 25000,
-        paymentDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Completed',
-        referenceNumber: 'TAX2024001',
-        receiptNumber: 'RCT/2024/001',
-        paymentMethod: 'Online (Paystack)',
-        dueDate: '2024-12-31'
-      },
-      {
-        id: '2',
-        serviceId: '3',
-        serviceName: 'Business Registration Tax',
-        taxpayerName: 'Grace Ventures Ltd',
-        taxPayerID: 'OLG/TP/2024/012',
-        amount: 15000,
-        paymentDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Processing',
-        referenceNumber: 'TAX2024015',
-        paymentMethod: 'Bank Transfer',
-        dueDate: '2024-11-30'
+  // Load services (Taxes) from API; hide payments/assessments until backend endpoints exist
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('tax'))
+          .map((s: any): TaxService => ({
+            id: s.id?.toString() || s._id?.toString() || s.name,
+            name: s.name || s.title || 'Service',
+            description: s.description || 'No description provided.',
+            category: (s.category || 'Other Taxes') as any,
+            baseAmount: Number(s.baseAmount) || Number(s.fee) || 0,
+            calculationMethod: s.calculationMethod || 'Fixed/Variable by service',
+            dueDate: s.dueDate || 'Varies',
+            penalties: s.penalties || 'Varies',
+            requirements: Array.isArray(s.requirements) ? s.requirements : [],
+            status: ((s.status || 'Available').toString().toLowerCase() === 'overdue' ? 'Overdue' : 'Available') as any,
+            priority: s.priority || undefined,
+          }));
+        setTaxServices(normalized);
+      } catch (e) {
+        setTaxServices([]);
       }
-    ];
-    setPayments(mockPayments);
-
-    const mockAssessments: TaxAssessment[] = [
-      {
-        id: '1',
-        taxpayerName: 'Mr. Chinedu Okafor',
-        propertyAddress: '45 New Haven Street, Ndoni',
-        assessmentType: 'Property',
-        assessedValue: 5000000,
-        taxAmount: 25000,
-        assessmentDate: '2024-01-15',
-        dueDate: '2024-12-31',
-        status: 'Paid',
-        paymentHistory: [mockPayments[0]]
-      },
-      {
-        id: '2',
-        taxpayerName: 'Grace Ventures Ltd',
-        businessName: 'Grace Ventures Trading Co.',
-        assessmentType: 'Business',
-        assessedValue: 2000000,
-        taxAmount: 15000,
-        assessmentDate: '2024-02-01',
-        dueDate: '2024-11-30',
-        status: 'Active',
-        paymentHistory: []
-      }
-    ];
-    setAssessments(mockAssessments);
+    };
+    loadServices();
+    setPayments([]);
+    setAssessments([]);
   }, []);
 
   // Handle payment initiation

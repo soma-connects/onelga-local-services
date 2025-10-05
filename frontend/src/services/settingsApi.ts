@@ -110,102 +110,137 @@ export interface UserDataExport {
 
 // Settings API Service
 class SettingsService {
+  // Helpers to normalize API responses and shapes
+  private unwrap<T>(resp: any): T {
+    // Supports both { data: {...} } and direct object responses
+    return (resp?.data?.data ?? resp?.data ?? resp) as T;
+  }
+
+  private normalizeUserSettings(d: any): UserSettings {
+    return {
+      theme: d?.theme ?? 'system',
+      language: d?.language ?? 'en',
+      fontSize: d?.fontSize ?? 'medium',
+      soundEnabled: d?.soundEnabled ?? true,
+      autoSave: d?.autoSave ?? true,
+      compactMode: d?.compactMode ?? false,
+    };
+  }
+
+  private normalizeNotificationSettings(d: any): NotificationSettings {
+    return {
+      emailNotifications: d?.emailNotifications ?? true,
+      smsNotifications: d?.smsNotifications ?? false,
+      pushNotifications: d?.pushNotifications ?? true,
+      applicationUpdates: d?.applicationUpdates ?? true,
+      paymentReminders: d?.paymentReminders ?? true,
+      systemAnnouncements: d?.systemAnnouncements ?? true,
+      documentExpiry: d?.documentExpiry ?? true,
+      serviceUpdates: d?.serviceUpdates ?? false,
+      accountSecurity: d?.accountSecurity ?? true,
+      weeklyDigest: d?.weeklyDigest ?? false,
+      quietHours: {
+        enabled: d?.quietHours?.enabled ?? d?.quietHoursEnabled ?? false,
+        start: d?.quietHours?.start ?? d?.quietHoursStart ?? '22:00',
+        end: d?.quietHours?.end ?? d?.quietHoursEnd ?? '08:00',
+      },
+    };
+  }
+
+  private normalizePrivacySettings(d: any): PrivacySettings {
+    return {
+      profileVisibility: d?.profileVisibility ?? 'private',
+      dataSharing: d?.dataSharing ?? false,
+      analyticsOptOut: d?.analyticsOptOut ?? false,
+      locationTracking: d?.locationTracking ?? false,
+      cookiesAccepted: d?.cookiesAccepted ?? true,
+      marketingEmails: d?.marketingEmails ?? false,
+      thirdPartyIntegrations: d?.thirdPartyIntegrations ?? false,
+    };
+  }
+
+  private normalizeSecuritySettings(d: any): SecuritySettings {
+    return {
+      twoFactorEnabled: d?.twoFactorEnabled ?? false,
+      loginNotifications: d?.loginNotifications ?? true,
+      sessionTimeout: d?.sessionTimeout ?? 30,
+      passwordLastChanged: d?.passwordLastChanged ?? null,
+      trustedDevices: d?.trustedDevices ?? [],
+      loginHistory: d?.loginHistory ?? [],
+    };
+  }
+
   // User Settings
   async getUserSettings(): Promise<UserSettings> {
     try {
       const response = await apiClient.get('/settings/user');
-      return response.data.data;
+      const d = this.unwrap<any>(response);
+      return this.normalizeUserSettings(d);
     } catch (error) {
       // Return default settings if API fails
-      return {
-        theme: 'system',
-        language: 'en',
-        fontSize: 'medium',
-        soundEnabled: true,
-        autoSave: true,
-        compactMode: false,
-      };
+      return this.normalizeUserSettings({});
     }
   }
 
   async updateUserSettings(settings: UserSettings): Promise<UserSettings> {
     const response = await apiClient.put('/settings/user', settings);
-    return response.data.data;
+    const d = this.unwrap<any>(response);
+    return this.normalizeUserSettings(d);
   }
 
   // Notification Settings
   async getNotificationSettings(): Promise<NotificationSettings> {
     try {
       const response = await apiClient.get('/settings/notifications');
-      return response.data.data;
+      const d = this.unwrap<any>(response);
+      return this.normalizeNotificationSettings(d);
     } catch (error) {
       // Return default settings if API fails
-      return {
-        emailNotifications: true,
-        smsNotifications: false,
-        pushNotifications: true,
-        applicationUpdates: true,
-        paymentReminders: true,
-        systemAnnouncements: true,
-        documentExpiry: true,
-        serviceUpdates: false,
-        accountSecurity: true,
-        weeklyDigest: false,
-        quietHours: { enabled: false, start: '22:00', end: '08:00' },
-      };
+      return this.normalizeNotificationSettings({});
     }
   }
 
   async updateNotificationSettings(settings: NotificationSettings): Promise<NotificationSettings> {
+    // Optionally map outgoing payload to backend's flat fields if needed
     const response = await apiClient.put('/settings/notifications', settings);
-    return response.data.data;
+    const d = this.unwrap<any>(response);
+    return this.normalizeNotificationSettings(d);
   }
 
   // Privacy Settings
   async getPrivacySettings(): Promise<PrivacySettings> {
     try {
       const response = await apiClient.get('/settings/privacy');
-      return response.data.data;
+      const d = this.unwrap<any>(response);
+      return this.normalizePrivacySettings(d);
     } catch (error) {
       // Return default settings if API fails
-      return {
-        profileVisibility: 'private',
-        dataSharing: false,
-        analyticsOptOut: false,
-        locationTracking: false,
-        cookiesAccepted: true,
-        marketingEmails: false,
-        thirdPartyIntegrations: false,
-      };
+      return this.normalizePrivacySettings({});
     }
   }
 
   async updatePrivacySettings(settings: PrivacySettings): Promise<PrivacySettings> {
     const response = await apiClient.put('/settings/privacy', settings);
-    return response.data.data;
+    const d = this.unwrap<any>(response);
+    return this.normalizePrivacySettings(d);
   }
 
   // Security Settings
   async getSecuritySettings(): Promise<SecuritySettings> {
     try {
       const response = await apiClient.get('/settings/security');
-      return response.data.data;
+      const d = this.unwrap<any>(response);
+      return this.normalizeSecuritySettings(d);
     } catch (error) {
       // Return default settings if API fails
-      return {
-        twoFactorEnabled: false,
-        loginNotifications: true,
-        sessionTimeout: 30,
-        passwordLastChanged: null,
-        trustedDevices: [],
-        loginHistory: [],
-      };
+      return this.normalizeSecuritySettings({});
     }
   }
 
   async updateSecuritySettings(settings: Partial<SecuritySettings>): Promise<SecuritySettings> {
     const response = await apiClient.put('/settings/security', settings);
-    return response.data.data;
+    const d = this.unwrap<any>(response);
+    return this.normalizeSecuritySettings(d);
   }
 
   // Password Management

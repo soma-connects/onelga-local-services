@@ -87,12 +87,83 @@ router.get(
         'COMPLAINT',
         'EDUCATION_APPLICATION',
         'HOUSING_APPLICATION',
+        'SOCIAL_SERVICE',
+        'TRANSPORT_SERVICE',
       ])
       .withMessage('Invalid application type'),
-    query('status').optional().isIn(['PENDING', 'APPROVED', 'REJECTED']).withMessage('Invalid status'),
+    query('status').optional().isIn(['PENDING', 'APPROVED', 'REJECTED', 'COMPLETED', 'UNDER_REVIEW']).withMessage('Invalid status'),
   ],
   validateRequest,
   profileController.getApplications.bind(profileController)
+);
+
+router.post(
+  '/applications',
+  [
+    body('type')
+      .isIn([
+        'IDENTIFICATION_LETTER',
+        'BIRTH_CERTIFICATE',
+        'HEALTH_APPOINTMENT',
+        'BUSINESS_REGISTRATION',
+        'VEHICLE_REGISTRATION',
+        'COMPLAINT',
+        'EDUCATION_APPLICATION',
+        'HOUSING_APPLICATION',
+      ])
+      .withMessage('Invalid application type'),
+    body('data').notEmpty().withMessage('Application data is required'),
+  ],
+  validateRequest,
+  profileController.createApplication.bind(profileController)
+);
+
+router.get(
+  '/applications/:id',
+  [],
+  validateRequest,
+  profileController.getApplicationById.bind(profileController)
+);
+
+// Admin endpoints to view all applications
+router.get(
+  '/admin/applications',
+  [
+    query('page').optional().isInt({ min: 1 }),
+    query('limit').optional().isInt({ min: 1, max: 100 }),
+    query('type').optional().isString(),
+    query('status').optional().isString(),
+  ],
+  validateRequest,
+  async (req: AuthRequest, res: Response) => {
+    // inline role check (uses auth.ts middleware population)
+    if (!req.user || !['ADMIN', 'STAFF'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    return profileController.getAllApplications(req, res);
+  }
+);
+
+router.get(
+  '/admin/applications/:id',
+  [],
+  validateRequest,
+  async (req: AuthRequest, res: Response) => {
+    if (!req.user || !['ADMIN', 'STAFF'].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    return profileController.getApplicationById(req, res);
+  }
+);
+
+router.put(
+  '/admin/applications/:id/status',
+  [
+    param('id').isString().withMessage('Invalid application ID'),
+    body('status').isIn(['PENDING','UNDER_REVIEW','APPROVED','REJECTED','COMPLETED']).withMessage('Invalid status value'),
+  ],
+  validateRequest,
+  (req: AuthRequest, res: Response) => profileController.updateApplicationStatus(req, res)
 );
 
 router.post(

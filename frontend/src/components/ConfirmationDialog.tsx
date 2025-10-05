@@ -1,47 +1,48 @@
 import React from 'react';
 import {
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
   DialogTitle,
+  DialogContent,
+  DialogActions,
   Button,
-  CircularProgress,
+  Typography,
 } from '@mui/material';
+import {
+  Warning,
+  Error as ErrorIcon,
+  Info,
+} from '@mui/icons-material';
 
 interface ConfirmationDialogProps {
   open: boolean;
   title: string;
-  content: string;
-  confirmText?: string;
-  cancelText?: string;
+  message: string;
   onConfirm: () => void;
-  onClose: () => void;
-  loading?: boolean;
+  onCancel: () => void;
+  severity?: 'warning' | 'error' | 'info';
+  confirmText?: string;
 }
 
-const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
-  open,
-  title,
-  content,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
-  onConfirm,
-  onClose,
-  loading = false,
-}) => {
+const ConfirmationDialog = ({ open, title, message, onConfirm, onCancel, severity = 'warning', confirmText = 'Confirm' }: ConfirmationDialogProps) => {
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{title}</DialogTitle>
+    <Dialog open={open} onClose={onCancel} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {severity === 'warning' && <Warning color="warning" />}
+        {severity === 'error' && <ErrorIcon color="error" />}
+        {severity === 'info' && <Info color="info" />}
+        {title}
+      </DialogTitle>
       <DialogContent>
-        <DialogContentText>{content}</DialogContentText>
+        <Typography>{message}</Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          {cancelText}
-        </Button>
-        <Button onClick={onConfirm} color="primary" variant="contained" disabled={loading}>
-          {loading ? <CircularProgress size={24} /> : confirmText}
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color={severity === 'error' ? 'error' : 'primary'}
+        >
+          {confirmText}
         </Button>
       </DialogActions>
     </Dialog>

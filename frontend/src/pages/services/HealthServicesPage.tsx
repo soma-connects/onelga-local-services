@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -59,12 +59,13 @@ import {
   MedicalServices,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI } from '../../services/api';
 
 interface HealthService {
   id: string;
   name: string;
   description: string;
-  category: 'Primary Care' | 'Emergency' | 'Preventive' | 'Specialized' | 'Maternal' | 'Mental Health';
+  category: string; // backend-driven
   availability: 'Available' | 'Limited' | 'Unavailable';
   requirements: string[];
   cost: string;
@@ -109,124 +110,73 @@ const HealthServicesPage: React.FC = () => {
     preferredDoctor: '',
   });
 
-  // Mock data for health services
-  const healthServices: HealthService[] = [
-    {
-      id: '1',
-      name: 'General Health Check-up',
-      description: 'Comprehensive health screening including vital signs, basic tests, and consultation',
-      category: 'Primary Care',
-      availability: 'Available',
-      requirements: ['Valid ID', 'Health Insurance (if available)'],
-      cost: 'Free for residents',
-      duration: '45 minutes',
-      location: 'Onelga Primary Health Center'
-    },
-    {
-      id: '2',
-      name: 'Child Immunization',
-      description: 'Routine vaccination services for children according to national immunization schedule',
-      category: 'Preventive',
-      availability: 'Available',
-      requirements: ['Child\'s Birth Certificate', 'Immunization Card'],
-      cost: 'Free',
-      duration: '30 minutes',
-      location: 'All Health Centers'
-    },
-    {
-      id: '3',
-      name: 'Maternal Health Services',
-      description: 'Prenatal care, delivery services, and postnatal care for expectant mothers',
-      category: 'Maternal',
-      availability: 'Available',
-      requirements: ['Valid ID', 'Pregnancy confirmation'],
-      cost: 'Subsidized',
-      duration: '1-2 hours',
-      location: 'Maternal Health Units'
-    },
-    {
-      id: '4',
-      name: 'Mental Health Counseling',
-      description: 'Professional counseling and mental health support services',
-      category: 'Mental Health',
-      availability: 'Limited',
-      requirements: ['Referral letter (optional)', 'Valid ID'],
-      cost: 'Free for residents',
-      duration: '1 hour',
-      location: 'Onelga Mental Health Center'
-    },
-    {
-      id: '5',
-      name: 'Emergency Medical Services',
-      description: '24/7 emergency medical care and ambulance services',
-      category: 'Emergency',
-      availability: 'Available',
-      requirements: ['Emergency situation'],
-      cost: 'Emergency rates apply',
-      duration: 'As needed',
-      location: 'Emergency Units'
-    },
-    {
-      id: '6',
-      name: 'Elderly Care Services',
-      description: 'Specialized healthcare services for senior citizens',
-      category: 'Specialized',
-      availability: 'Available',
-      requirements: ['Valid ID', 'Age verification (60+)'],
-      cost: 'Free for seniors',
-      duration: '1 hour',
-      location: 'Geriatric Care Unit'
-    }
-  ];
+  const [healthServices, setHealthServices] = useState<HealthService[]>([]);
 
-  // Mock appointments data
-  React.useEffect(() => {
-    const mockAppointments: Appointment[] = [
-      {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'General Health Check-up',
-        date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        time: '09:00',
-        status: 'Scheduled',
-        healthCenter: 'Onelga Primary Health Center',
-        doctor: 'Dr. Sarah Johnson',
-        notes: 'Annual check-up'
-      },
-      {
-        id: '2',
-        serviceId: '2',
-        serviceName: 'Child Immunization',
-        date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        time: '14:30',
-        status: 'Confirmed',
-        healthCenter: 'Onelga Primary Health Center',
-        doctor: 'Nurse Mary Adams'
+  // Load services and appointments from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('health'))
+          .map((s: any): HealthService => {
+            const statusMap: Record<string, HealthService['availability']> = {
+              available: 'Available',
+              'temporarily_unavailable': 'Unavailable',
+              coming_soon: 'Limited',
+            };
+            const st = (s.status || 'available').toString().toLowerCase();
+            return {
+              id: s.id?.toString() || s._id?.toString() || s.name,
+              name: s.name || s.title || 'Service',
+              description: s.description || 'No description provided.',
+              category: s.category || 'Health',
+              availability: statusMap[st] || 'Available',
+              requirements: Array.isArray(s.requirements) ? s.requirements : [],
+              cost: typeof s.fee === 'number' ? `₦${s.fee.toLocaleString()}` : (s.fee || 'Free'),
+              duration: s.duration || s.processingTime || '30-60 minutes',
+              location: s.location || 'Onelga Health Centers',
+            };
+          });
+        setHealthServices(normalized);
+      } catch (e) {
+        setHealthServices([]);
       }
-    ];
-    setAppointments(mockAppointments);
-
-    const mockRecords: HealthRecord[] = [
-      {
-        id: '1',
-        type: 'Vaccination',
-        title: 'COVID-19 Booster Shot',
-        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        provider: 'Onelga Health Center',
-        status: 'Completed',
-        description: 'Pfizer COVID-19 booster vaccination administered'
-      },
-      {
-        id: '2',
-        type: 'Check-up',
-        title: 'Annual Physical Examination',
-        date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        provider: 'Dr. James Wilson',
-        status: 'Completed',
-        description: 'Comprehensive health screening - all results normal'
+    };
+    const loadAppointments = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'HEALTH_APPOINTMENT', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: Appointment[] = apps.map((app: any) => {
+          const stRaw = (app.status || '').toString().toUpperCase();
+          const statusMap: Record<string, Appointment['status']> = {
+            PENDING: 'Scheduled',
+            UNDER_REVIEW: 'Scheduled',
+            APPROVED: 'Confirmed',
+            REJECTED: 'Cancelled',
+            COMPLETED: 'Completed',
+          };
+          return {
+            id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+            serviceId: app.serviceId || app.type || 'health',
+            serviceName: app.serviceName || app.type || 'Health Service',
+            date: (app.data?.date || app.appointmentDate || new Date().toISOString()).toString().split('T')[0],
+            time: app.data?.time || app.appointmentTime || '09:00',
+            status: statusMap[stRaw] || 'Scheduled',
+            healthCenter: app.data?.healthCenter || 'Onelga Health Center',
+            doctor: app.data?.doctor || 'TBD',
+            notes: app.data?.reason,
+          };
+        });
+        setAppointments(mapped);
+      } catch (e) {
+        setAppointments([]);
       }
-    ];
-    setHealthRecords(mockRecords);
+    };
+    loadServices();
+    loadAppointments();
   }, []);
 
   // Book appointment
@@ -243,19 +193,29 @@ const HealthServicesPage: React.FC = () => {
     }
 
     try {
-      // Mock booking API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newAppointment: Appointment = {
-        id: Date.now().toString(),
+      const payload = {
+        type: 'HEALTH_APPOINTMENT',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        date: bookingForm.date,
-        time: bookingForm.time,
-        status: 'Scheduled',
-        healthCenter: bookingForm.healthCenter,
-        doctor: bookingForm.preferredDoctor || 'To be assigned',
-        notes: bookingForm.reason
+        data: {
+          date: bookingForm.date,
+          time: bookingForm.time,
+          healthCenter: bookingForm.healthCenter,
+          doctor: bookingForm.preferredDoctor,
+          reason: bookingForm.reason,
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newAppointment: Appointment = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
+        date: created.data?.date || bookingForm.date,
+        time: created.data?.time || bookingForm.time,
+        status: (created.status || 'Scheduled') as Appointment['status'],
+        healthCenter: created.data?.healthCenter || bookingForm.healthCenter,
+        doctor: created.data?.doctor || bookingForm.preferredDoctor || 'To be assigned',
+        notes: created.data?.reason || bookingForm.reason,
       };
 
       setAppointments(prev => [newAppointment, ...prev]);

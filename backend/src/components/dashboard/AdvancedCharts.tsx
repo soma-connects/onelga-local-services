@@ -506,7 +506,7 @@ export const AdvancedBarChart: React.FC<AdvancedBarChartProps> = ({
               <Bar
                 key={bar.key}
                 dataKey={bar.key}
-                stackId={stacked ? "a" : undefined}
+                {...(stacked ? { stackId: "a" } : {})}
                 fill={bar.color}
                 name={bar.name}
                 radius={[2, 2, 0, 0]}

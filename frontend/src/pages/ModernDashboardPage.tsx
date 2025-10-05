@@ -188,7 +188,7 @@ const ModernDashboardPage: React.FC = () => {
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
 
   // Fetch data using our hooks
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats();
+  const { data: stats, isLoading: statsLoading, isError: statsError, refetch: refetchStats } = useDashboardStats();
   const { data: applications, isLoading: appsLoading } = useApplications(5);
   const { data: notificationsData, isLoading: notificationsLoading } = useNotifications(5);
   const { data: activityData, isLoading: activityLoading } = useActivity(5);
@@ -248,7 +248,7 @@ const ModernDashboardPage: React.FC = () => {
     return Math.round((completedRate * 0.6) + (approvalRate * 0.4));
   };
 
-  if (statsLoading) {
+  if (statsLoading && !statsError) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
         <Box sx={{ mb: 4 }}>

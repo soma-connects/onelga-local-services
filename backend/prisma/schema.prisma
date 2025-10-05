@@ -26,6 +26,8 @@ model User {
   isVerified  Boolean  @default(false)
   isActive    Boolean  @default(true)
   lastLogin   DateTime?
+  // Staff assigned service; restricts STAFF users to one service when set
+  staffService String?  @map("staff_service")
   failedLoginAttempts Int      @default(0)
   lockoutUntil        DateTime?
   createdAt   DateTime @default(now())
@@ -52,6 +54,8 @@ model User {
   privacySettings       PrivacySettings?
   securitySettings      SecuritySettings?
   auditLogs            AuditLog[]
+  newsArticles         NewsArticle[]
+  newsComments         NewsComment[]
 
   @@map("users")
 }
@@ -234,6 +238,7 @@ model Application {
   referenceNumber String @unique
   status    String    @default("PENDING")
   data      String?   // JSON string for flexible data storage
+  businessName String? // For business registration applications
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
@@ -443,4 +448,80 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@map("audit_logs")
+}
+
+// News System Models
+model NewsCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  slug        String   @unique
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  articles NewsArticle[]
+
+  @@map("news_categories")
+}
+
+model NewsArticle {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  excerpt       String?
+  content       String   // Full article content
+  featuredImage String?  // URL to featured image
+  metaTitle     String?  // SEO meta title
+  metaDescription String? // SEO meta description
+  status        String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  isBreaking    Boolean  @default(false)
+  isFeatured    Boolean  @default(false)
+  viewCount     Int      @default(0)
+  publishedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  authorId      String
+  categoryId    String
+
+  // Relations
+  author   User         @relation(fields: [authorId], references: [id])
+  category NewsCategory @relation(fields: [categoryId], references: [id])
+  tags     NewsTag[]
+  comments NewsComment[]
+
+  @@map("news_articles")
+}
+
+model NewsTag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  // Relations
+  articles NewsArticle[]
+
+  @@map("news_tags")
+}
+
+model NewsComment {
+  id        String   @id @default(cuid())
+  content   String
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  isReply   Boolean  @default(false)
+  parentId  String?  // For nested comments
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  articleId String
+
+  // Relations
+  author  User        @relation(fields: [authorId], references: [id])
+  article NewsArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  parent  NewsComment? @relation("CommentReplies", fields: [parentId], references: [id])
+  replies NewsComment[] @relation("CommentReplies")
+
+  @@map("news_comments")
 }

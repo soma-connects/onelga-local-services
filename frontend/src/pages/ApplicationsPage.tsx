@@ -215,7 +215,18 @@ const ApplicationsPage: React.FC = () => {
           if (data.success) {
             // Transform backend application data to match frontend interface
             const transformedApplications: Application[] = data.data.applications.map((app: any) => {
-              const appData = app.data ? JSON.parse(app.data) : {};
+              let appData: any = {};
+              if (app.data) {
+                if (typeof app.data === 'string') {
+                  try {
+                    appData = JSON.parse(app.data);
+                  } catch {
+                    appData = {};
+                  }
+                } else {
+                  appData = app.data;
+                }
+              }
               return {
                 id: app.id,
                 serviceName: getServiceName(app.type),

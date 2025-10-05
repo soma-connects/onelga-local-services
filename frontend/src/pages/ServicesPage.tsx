@@ -41,6 +41,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { servicesAPI } from '../services/api';
 
 interface Service {
   id: string;
@@ -77,24 +78,138 @@ const ServicesPage: React.FC = () => {
     { value: 'birth-registration', label: 'Birth Registration', count: 0 },
   ];
 
-  // Fetch real services data from backend
+  // Helper: pick icon based on category
+  const getIconByCategory = (category: string): React.ElementType => {
+    const map: Record<string, React.ElementType> = {
+      identification: IdentificationIcon,
+      'birth-registration': BirthIcon,
+      health: HealthIcon,
+      'health services': HealthIcon,
+      business: BusinessIcon,
+      transport: TransportIcon,
+      'social-security': ComplaintIcon,
+      education: EducationIcon,
+      housing: HousingIcon,
+      general: CategoryIcon,
+    };
+    const key = (category || '').toLowerCase();
+    return map[key] || map.general;
+  };
+
+  // Curated fallback services (shown if API missing/fails)
+  const fallbackServices: Service[] = [
+    {
+      id: 'identification-letter',
+      name: 'Identification Letter',
+      description: 'Apply for your official local government identification letter.',
+      category: 'identification',
+      processingTime: '2-3 days',
+      requirements: ['Valid ID', 'Proof of Address'],
+      fee: 500,
+      isPopular: true,
+      status: 'available',
+      icon: IdentificationIcon,
+      applicationPath: '/services/identification',
+    },
+    {
+      id: 'birth-certificate',
+      name: 'Birth Certificate',
+      description: 'Register a new birth or request a certificate.',
+      category: 'birth-registration',
+      processingTime: '5-7 days',
+      requirements: ['Hospital letter', 'Parent ID'],
+      fee: 1000,
+      isPopular: true,
+      status: 'available',
+      icon: BirthIcon,
+      applicationPath: '/services/birth-certificate',
+    },
+    {
+      id: 'health-appointment',
+      name: 'Health Appointment',
+      description: 'Book appointments and access health services.',
+      category: 'health',
+      processingTime: 'Same day',
+      requirements: ['National ID (optional)'],
+      fee: 0,
+      isPopular: false,
+      status: 'available',
+      icon: HealthIcon,
+      applicationPath: '/services/health',
+    },
+    {
+      id: 'business-registration',
+      name: 'Business Registration',
+      description: 'Register your business locally and obtain permits.',
+      category: 'business',
+      processingTime: '7-14 days',
+      requirements: ['Business name', 'Owner ID'],
+      fee: 2500,
+      isPopular: false,
+      status: 'coming_soon',
+      icon: BusinessIcon,
+      applicationPath: '/services/business',
+    },
+    {
+      id: 'vehicle-registration',
+      name: 'Vehicle Registration',
+      description: 'Register your vehicle and obtain road permits.',
+      category: 'transport',
+      processingTime: '3-5 days',
+      requirements: ['Vehicle documents', 'Owner ID'],
+      fee: 3000,
+      isPopular: false,
+      status: 'temporarily_unavailable',
+      icon: TransportIcon,
+      applicationPath: '/services/transport',
+    },
+  ];
+
+  // Normalize backend service shape to our UI model
+  const normalizeService = (item: any): Service => {
+    const category: string = (item.category || item.type || 'general').toString();
+    const statusRaw = (item.status || 'available').toString().toLowerCase();
+    const allowedStatus = ['available', 'temporarily_unavailable', 'coming_soon'];
+    const status = allowedStatus.includes(statusRaw) ? (statusRaw as Service['status']) : 'available';
+    return {
+      id: item.id?.toString() || item._id?.toString() || `${category}-${item.name || item.title || 'service'}`,
+      name: item.name || item.title || 'Service',
+      description: item.description || item.summary || 'No description provided.',
+      category,
+      processingTime: item.processingTime || item.sla || '1-3 days',
+      requirements: Array.isArray(item.requirements)
+        ? item.requirements
+        : (typeof item.requirements === 'string' ? [item.requirements] : []),
+      fee: typeof item.fee === 'number' ? item.fee : Number(item.fee) || 0,
+      isPopular: Boolean(item.isPopular),
+      status,
+      icon: getIconByCategory(category),
+      applicationPath: item.applicationPath || `/services/${category.replace(/\s+/g, '-').toLowerCase()}`,
+    };
+  };
+
+  // Fetch services data with graceful fallback
   useEffect(() => {
     const loadServices = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/services', {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const result = await response.json();
-        if (result.success && result.data && result.data.services) {
-          // Optionally map icons if needed
-          setServices(result.data.services);
-          setFilteredServices(result.data.services);
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data)
+          ? resp.data
+          : (resp.data as any)?.services || [];
+        if (raw && raw.length > 0) {
+          const normalized = raw.map(normalizeService);
+          setServices(normalized);
+          setFilteredServices(normalized);
         } else {
-          toast.error(result.message || 'Failed to load services');
+          // Empty API response → use curated fallback
+          setServices(fallbackServices);
+          setFilteredServices(fallbackServices);
         }
       } catch (error) {
-        toast.error('Failed to load services');
+        // Network/API failure → fallback for a good UX
+        setServices(fallbackServices);
+        setFilteredServices(fallbackServices);
       } finally {
         setLoading(false);
       }

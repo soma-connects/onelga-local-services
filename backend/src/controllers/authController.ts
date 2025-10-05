@@ -64,6 +64,7 @@ export const register = async (req: AuthRequest, res: Response): Promise<Respons
 
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
+      select: { id: true },
     });
 
     if (existingUser) {
@@ -145,7 +146,26 @@ export const login = async (req: AuthRequest, res: Response): Promise<Response> 
 
     const { email, password } = req.body;
 
-    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    const user = await prisma.user.findUnique({
+      where: { email: email.toLowerCase() },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        firstName: true,
+        lastName: true,
+        phoneNumber: true,
+        dateOfBirth: true,
+        address: true,
+        role: true,
+        isVerified: true,
+        isActive: true,
+        status: true,
+        failedLoginAttempts: true,
+        lockoutUntil: true,
+        createdAt: true,
+      },
+    });
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
@@ -241,6 +261,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<Respo
         role: true,
         isVerified: true,
         isActive: true,
+        profilePicture: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -310,7 +331,7 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<R
       return res.status(400).json({ success: false, message: 'Current password and new password are required' });
     }
 
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { id: true, password: true } });
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });

@@ -180,8 +180,53 @@ export const requirePermission = (requiredPermissions: Permission[]) => {
 
 export const requireAdmin = requireRole(['ADMIN']);
 export const requireAdminOrStaff = requireRole(['ADMIN', 'STAFF']);
-export const requireOfficialOrAdmin = requireRole(['ADMIN', 'STAFF']);
+export const requireOfficialOrAdmin = requireRole(['ADMIN', 'OFFICIAL']);
 export const requireCitizen = requireRole(['CITIZEN']);
+
+// Enforce staff can only access their assigned service.
+// getService should return a canonical Application.type string (e.g., 'BIRTH_CERTIFICATE').
+export const requireStaffService = (getService: (req: AuthRequest) => string) => {
+  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Authentication required', code: 'AUTH_REQUIRED' });
+      return;
+    }
+    // Admins bypass service restriction
+    if (req.user.role === 'ADMIN') return next();
+
+    const requestedType = getService(req);
+    if (!requestedType) {
+      res.status(400).json({ success: false, message: 'Service type required', code: 'SERVICE_REQUIRED' });
+      return;
+    }
+
+    if (req.user.role !== 'STAFF') {
+      res.status(403).json({ success: false, message: 'Staff only endpoint', code: 'STAFF_REQUIRED' });
+      return;
+    }
+
+    try {
+      // Prefer explicit staffService on user
+      if (req.user['staffService'] && req.user['staffService'] === requestedType) {
+        return next();
+      }
+      // Fallback to ServiceAssignment entries
+      const assignment = await prisma.serviceAssignment.findFirst({
+        where: { userId: req.user.id, serviceType: requestedType },
+        select: { id: true },
+      });
+      if (!assignment) {
+        res.status(403).json({ success: false, message: 'Service not assigned to your account', code: 'SERVICE_NOT_ASSIGNED' });
+        return;
+      }
+      return next();
+    } catch (error: unknown) {
+      logger.error('requireStaffService error:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+      return;
+    }
+  };
+};
 
 // Permission-based middleware
 export const requireApplicationManagement = requirePermission(['READ_APPLICATIONS', 'WRITE_APPLICATIONS']);

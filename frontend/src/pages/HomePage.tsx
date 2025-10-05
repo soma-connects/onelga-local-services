@@ -49,6 +49,7 @@ import {
 import { Link as RouterLink } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
+import NewsSection from '../components/news/NewsSection';
 
 // Service categories for the homepage
 const serviceCategories = [
@@ -512,6 +513,9 @@ const HomePage: React.FC = () => {
           ))}
         </Grid>
       </Container>
+
+      {/* News Section */}
+      <NewsSection />
 
       {/* Call to Action Section */}
       <Box

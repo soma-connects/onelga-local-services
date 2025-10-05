@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -67,15 +67,16 @@ import {
   ContactSupport,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI } from '../../services/api';
 
 interface BusinessService {
   id: string;
   name: string;
   description: string;
-  category: 'Registration' | 'Licensing' | 'Tax' | 'Permits' | 'Support';
+  category: string; // backend-driven string
   requirements: string[];
   processingTime: string;
-  cost: string;
+  cost: string; // display-friendly
   status: 'Available' | 'Limited' | 'Unavailable';
 }
 
@@ -126,89 +127,7 @@ const BusinessServicesPage: React.FC = () => {
     additionalInfo: ''
   });
 
-  // Mock business services data
-  const businessServices: BusinessService[] = [
-    {
-      id: '1',
-      name: 'Business Name Registration',
-      description: 'Register your business name with the Corporate Affairs Commission (CAC)',
-      category: 'Registration',
-      requirements: ['Valid ID', 'Proposed business names (3 options)', 'Address proof'],
-      processingTime: '7-14 days',
-      cost: '₦15,000',
-      status: 'Available'
-    },
-    {
-      id: '2',
-      name: 'Limited Company Registration',
-      description: 'Incorporate your business as a limited liability company',
-      category: 'Registration',
-      requirements: ['Memorandum & Articles', 'Directors\' details', 'Share capital info'],
-      processingTime: '14-21 days',
-      cost: '₦50,000',
-      status: 'Available'
-    },
-    {
-      id: '3',
-      name: 'Trade License Application',
-      description: 'Obtain local government trade license for business operations',
-      category: 'Licensing',
-      requirements: ['Business registration', 'Tax clearance', 'Location permit'],
-      processingTime: '5-10 days',
-      cost: '₦25,000',
-      status: 'Available'
-    },
-    {
-      id: '4',
-      name: 'Tax Registration & TIN',
-      description: 'Register for tax identification number and tax obligations',
-      category: 'Tax',
-      requirements: ['Business registration certificate', 'Bank details', 'Valid ID'],
-      processingTime: '3-7 days',
-      cost: 'Free',
-      status: 'Available'
-    },
-    {
-      id: '5',
-      name: 'Building/Premises Permit',
-      description: 'Get approval for business premises and building modifications',
-      category: 'Permits',
-      requirements: ['Building plans', 'Environmental impact assessment', 'Land documents'],
-      processingTime: '21-30 days',
-      cost: '₦35,000',
-      status: 'Available'
-    },
-    {
-      id: '6',
-      name: 'Food & Beverage License',
-      description: 'Special license for restaurants, food vendors, and beverage businesses',
-      category: 'Licensing',
-      requirements: ['Health certificate', 'Food safety training', 'Premises inspection'],
-      processingTime: '10-14 days',
-      cost: '₦20,000',
-      status: 'Available'
-    },
-    {
-      id: '7',
-      name: 'Import/Export License',
-      description: 'License for international trade and customs operations',
-      category: 'Licensing',
-      requirements: ['Business registration', 'Customs documentation', 'Financial guarantee'],
-      processingTime: '14-21 days',
-      cost: '₦45,000',
-      status: 'Limited'
-    },
-    {
-      id: '8',
-      name: 'Business Support & Advisory',
-      description: 'Free consultation and support for business development',
-      category: 'Support',
-      requirements: ['Business plan (optional)', 'Valid ID'],
-      processingTime: '1-3 days',
-      cost: 'Free',
-      status: 'Available'
-    }
-  ];
+  const [businessServices, setBusinessServices] = useState<BusinessService[]>([]);
 
   const registrationSteps = [
     'Business Information',
@@ -217,57 +136,79 @@ const BusinessServicesPage: React.FC = () => {
     'Review & Submit'
   ];
 
-  // Mock data initialization
-  React.useEffect(() => {
-    const mockApplications: BusinessApplication[] = [
-      {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'Business Name Registration',
-        businessName: 'TechStart Nigeria Ltd',
-        businessType: 'Limited Company',
-        status: 'Under Review',
-        submissionDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        expectedCompletion: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000).toISOString(),
-        referenceNumber: 'BRN2024001',
-        notes: 'Name availability check in progress'
-      },
-      {
-        id: '2',
-        serviceId: '3',
-        serviceName: 'Trade License Application',
-        businessName: 'Green Foods Market',
-        businessType: 'Sole Proprietorship',
-        status: 'Approved',
-        submissionDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-        referenceNumber: 'TLA2024002',
-        notes: 'License ready for collection'
+  // Load services and applications from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('business'))
+          .map((s: any): BusinessService => {
+            const statusMap: Record<string, BusinessService['status']> = {
+              available: 'Available',
+              'temporarily_unavailable': 'Unavailable',
+              coming_soon: 'Limited',
+            };
+            const st = (s.status || 'available').toString().toLowerCase();
+            return {
+              id: s.id?.toString() || s._id?.toString() || s.name,
+              name: s.name || s.title || 'Service',
+              description: s.description || 'No description provided.',
+              category: s.category || 'Business',
+              requirements: Array.isArray(s.requirements) ? s.requirements : [],
+              processingTime: s.processingTime || s.sla || '1-3 days',
+              cost: typeof s.fee === 'number' ? `₦${s.fee.toLocaleString()}` : (s.fee || 'Varies'),
+              status: statusMap[st] || 'Available',
+            };
+          });
+        setBusinessServices(normalized);
+      } catch (e) {
+        // If API fails, show empty (no mocks)
+        setBusinessServices([]);
       }
-    ];
-    setApplications(mockApplications);
-
-    // Mock business profile for registered businesses
-    const mockProfile: BusinessProfile = {
-      id: '1',
-      businessName: 'Green Foods Market',
-      registrationNumber: 'RC123456789',
-      businessType: 'Sole Proprietorship',
-      industry: 'Food & Retail',
-      address: '15 Market Street, Ndoni, Rivers State',
-      phone: '+234-801-234-5678',
-      email: 'info@greenfoodsmarket.com',
-      registrationDate: '2024-01-15',
-      status: 'Active',
-      licenses: ['Trade License', 'Food Handler License'],
-      taxID: 'TIN1234567890'
     };
-    setBusinessProfile(mockProfile);
+    const loadApplications = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'BUSINESS_REGISTRATION', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: BusinessApplication[] = apps.map((app: any) => {
+          const stRaw = (app.status || '').toString().toUpperCase();
+          const statusMap: Record<string, BusinessApplication['status']> = {
+            PENDING: 'Submitted',
+            UNDER_REVIEW: 'Under Review',
+            APPROVED: 'Approved',
+            REJECTED: 'Rejected',
+            COMPLETED: 'Completed',
+          };
+          return {
+            id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+            serviceId: app.serviceId || app.type || 'business',
+            serviceName: app.serviceName || app.type || 'Business Service',
+            businessName: app.data?.businessName || app.applicant?.businessName || '-',
+            businessType: app.data?.businessType || '-',
+            status: statusMap[stRaw] || 'Submitted',
+            submissionDate: app.createdAt || new Date().toISOString(),
+            expectedCompletion: app.expectedCompletion,
+            referenceNumber: app.reference || app.referenceNumber,
+            notes: app.notes,
+          };
+        });
+        setApplications(mapped);
+      } catch (e) {
+        setApplications([]);
+      }
+    };
+    loadServices();
+    loadApplications();
   }, []);
 
   // Handle service application
   const handleApplyForService = (service: BusinessService) => {
     setSelectedService(service);
-    if (service.category === 'Registration' && service.name.includes('Business Name')) {
+    // Show wizard for Business Registration service
+    if ((service.name || '').toLowerCase().includes('business') && (service.name || '').toLowerCase().includes('registration')) {
       setShowRegistrationWizard(true);
     } else {
       setShowApplicationDialog(true);
@@ -282,16 +223,31 @@ const BusinessServicesPage: React.FC = () => {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const newApplication: BusinessApplication = {
-        id: Date.now().toString(),
+      const payload = {
+        type: 'BUSINESS_REGISTRATION',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        businessName: applicationForm.businessName,
-        businessType: applicationForm.businessType,
-        status: 'Submitted',
-        submissionDate: new Date().toISOString(),
-        referenceNumber: `REF${Date.now()}`,
+        data: {
+          businessName: applicationForm.businessName,
+          businessType: applicationForm.businessType,
+          industry: applicationForm.industry,
+          description: applicationForm.description,
+          address: applicationForm.address,
+          phone: applicationForm.phone,
+          email: applicationForm.email,
+          additionalInfo: applicationForm.additionalInfo,
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newApplication: BusinessApplication = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
+        businessName: created.data?.businessName || applicationForm.businessName,
+        businessType: created.data?.businessType || applicationForm.businessType,
+        status: (created.status || 'Submitted') as BusinessApplication['status'],
+        submissionDate: created.createdAt || new Date().toISOString(),
+        referenceNumber: created.reference || created.referenceNumber,
       };
       setApplications(prev => [newApplication, ...prev]);
       toast.success('Application submitted successfully!');
@@ -300,7 +256,6 @@ const BusinessServicesPage: React.FC = () => {
       resetForm();
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        // Log error details in development for debugging
         // eslint-disable-next-line no-console
         console.error('Business application submission error:', error);
       }

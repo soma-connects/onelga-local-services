@@ -28,6 +28,7 @@ import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
 import adminRoutes from './routes/adminRoutes';
 import servicesRoutes from './routes/servicesRoutes';
+import serviceManagementRoutes from './routes/serviceManagementRoutes';
 import identificationRoutes from './routes/identificationRoutes';
 import ninVerificationRoutes from './routes/ninVerificationRoutes';
 import healthRoutes from './routes/healthRoutes';
@@ -36,6 +37,10 @@ import documentRoutes from './routes/documentRoutes';
 import enhancedServicesRoutes from './routes/enhancedServicesRoutes';
 import analyticsRoutes from './routes/analyticsRoutes';
 import settingsRoutes from './routes/settingsRoutes';
+import newsRoutes from './routes/newsRoutes';
+import birthRoutes from './routes/birthRoutes';
+import systemRoutes from './routes/systemRoutes';
+import dashboardRoutes from './routes/dashboardRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -79,6 +84,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', userRoutes);
 app.use('/api/admin', adminRoutes);
+// Service management routes (must come before static services listing)
+app.use('/api/services', serviceManagementRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/identification', identificationRoutes);
 app.use('/api/identification', ninVerificationRoutes);
@@ -88,6 +95,10 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/enhanced-services', enhancedServicesRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/birth', birthRoutes);
+app.use('/api/system', systemRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Welcome endpoint
 app.get('/api', (_req, res) => {
@@ -107,6 +118,8 @@ app.get('/api', (_req, res) => {
       documents: '/api/documents',
       'enhanced-services': '/api/enhanced-services',
       analytics: '/api/analytics',
+      settings: '/api/settings',
+      news: '/api/news',
     },
   });
 });

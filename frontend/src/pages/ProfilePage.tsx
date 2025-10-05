@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -486,6 +486,14 @@ const ProfilePage: React.FC = () => {
     });
   };
 
+  // Build asset base URL for static files and memoize avatar URL
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+  const ASSET_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+  const profileAvatarSrc = useMemo(() => {
+    if (!user?.profilePicture) return undefined;
+    return `${ASSET_BASE_URL}${user.profilePicture}?cb=${Date.now()}`;
+  }, [user?.profilePicture, ASSET_BASE_URL]);
+
   if (!user) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -510,7 +518,7 @@ const ProfilePage: React.FC = () => {
                   bgcolor: 'primary.main',
                   fontSize: '2rem'
                 }}
-                src={user.profilePicture ? `http://localhost:5000${user.profilePicture}` : undefined}
+                src={profileAvatarSrc}
               >
                 {user.firstName.charAt(0)}{user.lastName.charAt(0)}
               </Avatar>

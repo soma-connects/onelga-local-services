@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { apiService } from '../services/api';
 
 export interface UserSettings {
   language: string;
@@ -95,17 +97,70 @@ const defaultState: SettingsState = {
 const useSettings = () => {
   const [state, setState] = useState<SettingsState>(defaultState);
 
-  const updateUserSettings = (updates: Partial<UserSettings>) => {
-    setState((prev) => ({ ...prev, userSettings: { ...prev.userSettings, ...updates } }));
+  // Load settings on mount
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setState(prev => ({ ...prev, isLoading: true }));
+    try {
+      const response = await apiService.get('/settings');
+      if (response.success && response.data) {
+        setState(prev => ({
+          ...prev,
+          userSettings: { ...prev.userSettings, ...response.data.userSettings },
+          notificationSettings: { ...prev.notificationSettings, ...response.data.notificationSettings },
+          privacySettings: { ...prev.privacySettings, ...response.data.privacySettings },
+          securitySettings: { ...prev.securitySettings, ...response.data.securitySettings },
+        }));
+      }
+    } catch (error: any) {
+      console.error('Failed to load settings:', error);
+      // Continue with default settings
+    } finally {
+      setState(prev => ({ ...prev, isLoading: false }));
+    }
   };
-  const updateNotificationSettings = (updates: Partial<NotificationSettings>) => {
-    setState((prev) => ({ ...prev, notificationSettings: { ...prev.notificationSettings, ...updates } }));
+
+  const saveSettings = async (settingsType: string, settings: any) => {
+    setState(prev => ({ ...prev, isSaving: true }));
+    try {
+      await apiService.put('/settings', {
+        type: settingsType,
+        settings
+      });
+      toast.success('Settings saved successfully');
+    } catch (error: any) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings. Changes are kept locally.');
+    } finally {
+      setState(prev => ({ ...prev, isSaving: false }));
+    }
   };
-  const updatePrivacySettings = (updates: Partial<PrivacySettings>) => {
-    setState((prev) => ({ ...prev, privacySettings: { ...prev.privacySettings, ...updates } }));
+
+  const updateUserSettings = async (updates: Partial<UserSettings>) => {
+    const newSettings = { ...state.userSettings, ...updates };
+    setState((prev) => ({ ...prev, userSettings: newSettings }));
+    await saveSettings('userSettings', newSettings);
   };
-  const updateSecuritySettings = (updates: Partial<SecuritySettings>) => {
-    setState((prev) => ({ ...prev, securitySettings: { ...prev.securitySettings, ...updates } }));
+  
+  const updateNotificationSettings = async (updates: Partial<NotificationSettings>) => {
+    const newSettings = { ...state.notificationSettings, ...updates };
+    setState((prev) => ({ ...prev, notificationSettings: newSettings }));
+    await saveSettings('notificationSettings', newSettings);
+  };
+  
+  const updatePrivacySettings = async (updates: Partial<PrivacySettings>) => {
+    const newSettings = { ...state.privacySettings, ...updates };
+    setState((prev) => ({ ...prev, privacySettings: newSettings }));
+    await saveSettings('privacySettings', newSettings);
+  };
+  
+  const updateSecuritySettings = async (updates: Partial<SecuritySettings>) => {
+    const newSettings = { ...state.securitySettings, ...updates };
+    setState((prev) => ({ ...prev, securitySettings: newSettings }));
+    await saveSettings('securitySettings', newSettings);
   };
 
   return {

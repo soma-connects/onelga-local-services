@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Container,
   Typography,
@@ -80,6 +80,7 @@ import {
   Accessible,
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
+import { servicesAPI, applicationsAPI } from '../../services/api';
 
 interface HousingService {
   id: string;
@@ -160,211 +161,116 @@ const HousingServicesPage: React.FC = () => {
 
   const applicationSteps = ['Basic Information', 'Property Details', 'Project Description', 'Review & Submit'];
 
-  // Mock housing services data
-  const housingServices: HousingService[] = [
-    {
-      id: '1',
-      name: 'Building Permit Application',
-      description: 'Obtain permits for new construction, renovation, or extension of buildings',
-      category: 'Building Permits',
-      eligibility: ['Property ownership proof', 'Approved building plans', 'Site survey'],
-      requirements: ['Certificate of occupancy', 'Structural drawings', 'Environmental impact assessment', 'Payment of fees'],
-      processingTime: '21-30 working days',
-      cost: '₦50,000 - ₦200,000 (based on project size)',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '2',
-      name: 'Certificate of Occupancy',
-      description: 'Legal document confirming the right to occupy and use land or building',
-      category: 'Property Services',
-      eligibility: ['Valid survey plan', 'Property tax payments', 'Development compliance'],
-      requirements: ['Survey plan', 'Tax clearance', 'Site inspection report', 'Application form'],
-      processingTime: '45-60 working days',
-      cost: '₦25,000 - ₦100,000',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '3',
-      name: 'Affordable Housing Application',
-      description: 'Apply for government-subsidized housing for low-income families',
-      category: 'Housing Assistance',
-  eligibility: ['Onelga LGA resident', 'Income below threshold', 'First-time home buyer'],
-      requirements: ['Income verification', 'Employment letter', 'Bank statements', 'Family size documentation'],
-      processingTime: '60-90 working days',
-      cost: 'Subsidized (30-50% below market rate)',
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '4',
-      name: 'Land Registration & Title',
-      description: 'Register land ownership and obtain legal title documents',
-      category: 'Land Registration',
-      eligibility: ['Valid land purchase agreement', 'Survey verification', 'Community consent'],
-      requirements: ['Purchase agreement', 'Survey plan', 'Tax clearance', 'Community letter'],
-      processingTime: '30-45 working days',
-      cost: '₦15,000 - ₦40,000',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '5',
-      name: 'Property Development Approval',
-      description: 'Approval for large-scale property development projects',
-      category: 'Building Permits',
-      eligibility: ['Environmental clearance', 'Master plan approval', 'Infrastructure assessment'],
-      requirements: ['Environmental impact study', 'Development plan', 'Infrastructure plan', 'Public hearing'],
-      processingTime: '90-120 working days',
-      cost: '₦500,000 - ₦2,000,000',
-      status: 'Available',
-      priority: 'Medium'
-    },
-    {
-      id: '6',
-      name: 'Housing Renovation Grant',
-      description: 'Financial assistance for home improvements and repairs',
-      category: 'Housing Assistance',
-      eligibility: ['Property ownership', 'Income qualification', 'Safety/health needs'],
-      requirements: ['Ownership proof', 'Income verification', 'Contractor estimates', 'Safety inspection'],
-      processingTime: '30-45 working days',
-      cost: 'Grant up to ₦500,000',
-      status: 'Limited',
-      priority: 'Medium'
-    },
-    {
-      id: '7',
-      name: 'Utilities Connection Approval',
-      description: 'Approve connections for water, electricity, and sewage systems',
-      category: 'Utilities',
-      eligibility: ['Valid building permit', 'Utility assessments', 'Safety compliance'],
-      requirements: ['Building permit', 'Utility applications', 'Safety certificates', 'Connection fees'],
-      processingTime: '14-21 working days',
-      cost: '₦10,000 - ₦30,000 per utility',
-      status: 'Available',
-      priority: 'High'
-    },
-    {
-      id: '8',
-      name: 'Property Tax Assessment',
-      description: 'Official valuation and tax assessment of properties',
-      category: 'Property Services',
-      eligibility: ['Property registration', 'Current ownership', 'Development status'],
-      requirements: ['Property documents', 'Current photos', 'Measurement survey', 'Application form'],
-      processingTime: '21-30 working days',
-      cost: '₦8,000 - ₦15,000',
-      status: 'Available',
-      priority: 'Low'
-    }
-  ];
+  const [housingServices, setHousingServices] = useState<HousingService[]>([]);
 
-  // Mock housing programs
-  const housingPrograms: HousingProgram[] = [
+  const [housingPrograms, setHousingPrograms] = useState<HousingProgram[]>([]);
+
+  // Fallback programs (shown if backend does not provide programs)
+  const programsFallback: HousingProgram[] = [
     {
-      id: '1',
-      name: 'Onelga First Home Initiative',
-      type: 'First-Time Buyer',
-      description: 'Helping first-time home buyers with subsidized mortgage and down payment assistance',
-      benefits: ['20% down payment assistance', '5% interest rate subsidy', 'Free legal documentation', 'Property maintenance support'],
-  eligibility: ['First-time home buyer', 'Onelga resident for 2+ years', 'Stable income', 'Age 25-45 years'],
-      applicationDeadline: '2024-12-31',
-      availableUnits: 50,
-      status: 'Open'
-    },
-    {
-      id: '2',
-      name: 'Senior Citizens Housing Program',
-      type: 'Senior Citizen',
-      description: 'Specialized housing solutions for senior citizens with accessibility features',
-      benefits: ['Accessible housing units', 'Healthcare proximity', 'Community support', 'Maintenance included'],
-  eligibility: ['Age 65+ years', 'Onelga resident', 'Limited income', 'Medical needs assessment'],
-      applicationDeadline: '2024-10-15',
+      id: 'prog-1',
+      name: 'Affordable Housing Initiative',
+      type: 'Affordable Housing',
+      description: 'Subsidized housing for low and middle income families within ONELGA.',
+      benefits: ['Subsidized rent', 'Priority allocation', 'Community services access'],
+      eligibility: ['Resident of ONELGA', 'Valid ID', 'Income assessment'],
+      applicationDeadline: new Date(Date.now() + 30*24*60*60*1000).toISOString(),
       availableUnits: 25,
-      status: 'Open'
+      status: 'Open',
     },
     {
-      id: '3',
-      name: 'Low Income Housing Support',
-      type: 'Low Income',
-      description: 'Affordable housing options for families with limited income',
-      benefits: ['Subsidized rent', 'Utilities assistance', 'Maintenance support', 'Community facilities'],
-  eligibility: ['Income below poverty line', 'Family with children', 'Onelga resident', 'Employment verification'],
-      applicationDeadline: '2024-11-30',
-      availableUnits: 100,
-      status: 'Waitlist'
+      id: 'prog-2',
+      name: 'First-Time Home Buyer Support',
+      type: 'First-Time Buyer',
+      description: 'Support package for first-time home buyers including counseling and documentation assistance.',
+      benefits: ['Documentation assistance', 'Discounted fees', 'Priority processing'],
+      eligibility: ['First-time buyer', 'Resident of ONELGA'],
+      applicationDeadline: new Date(Date.now() + 45*24*60*60*1000).toISOString(),
+      status: 'Waitlist',
     },
     {
-      id: '4',
-      name: 'Disability-Friendly Housing',
-      type: 'Special Needs',
-      description: 'Housing units designed for persons with disabilities and special needs',
-      benefits: ['Wheelchair accessible', 'Special equipment support', 'Caregiver accommodation', 'Transport assistance'],
-  eligibility: ['Disability certification', 'Medical assessment', 'Onelga resident', 'Support system availability'],
-      applicationDeadline: '2024-09-30',
-      availableUnits: 15,
-      status: 'Open'
-    }
+      id: 'prog-3',
+      name: 'Senior Citizen Housing Aid',
+      type: 'Senior Citizen',
+      description: 'Assistance program for senior citizens for housing upgrades and accessibility.',
+      benefits: ['Accessibility upgrades', 'Maintenance aid'],
+      eligibility: ['Age 60+', 'Resident of ONELGA'],
+      applicationDeadline: new Date(Date.now() + 60*24*60*60*1000).toISOString(),
+      status: 'Coming Soon',
+    },
   ];
 
-  // Mock data initialization
-  React.useEffect(() => {
-    const mockApplications: HousingApplication[] = [
-      {
-        id: '1',
-        serviceId: '1',
-        serviceName: 'Building Permit Application',
-        applicantName: 'Mrs. Grace Okoro',
-        propertyAddress: '45 New Haven Street, Ndoni',
-        applicationDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Site Visit',
-        referenceNumber: 'HOU2024001',
-        estimatedCost: '₦150,000',
-        notes: 'Site inspection scheduled for next week'
-      },
-      {
-        id: '2',
-        serviceId: '3',
-        serviceName: 'Affordable Housing Application',
-        applicantName: 'Mr. Peter Eze',
-        propertyAddress: 'Onelga Housing Estate, Block A',
-        applicationDate: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Approved',
-        referenceNumber: 'HOU2024002',
-        completionDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Housing unit allocated, awaiting final documentation'
+  // Load services and applications from API
+  useEffect(() => {
+    const loadServices = async () => {
+      try {
+        const resp = await servicesAPI.getServices();
+        const raw = Array.isArray(resp.data) ? resp.data : (resp.data as any)?.services || [];
+        const normalized = raw
+          .filter((s: any) => `${s.category || ''}`.toLowerCase().includes('housing'))
+          .map((s: any): HousingService => {
+            const statusMap: Record<string, HousingService['status']> = {
+              available: 'Available',
+              'temporarily_unavailable': 'Unavailable',
+              coming_soon: 'Limited',
+            };
+            const st = (s.status || 'available').toString().toLowerCase();
+            return {
+              id: s.id?.toString() || s._id?.toString() || s.name,
+              name: s.name || s.title || 'Service',
+              description: s.description || 'No description provided.',
+              category: (s.category || 'Property Services') as any,
+              eligibility: Array.isArray(s.eligibility) ? s.eligibility : [],
+              requirements: Array.isArray(s.requirements) ? s.requirements : [],
+              processingTime: s.processingTime || s.sla || '1-3 weeks',
+              cost: typeof s.fee === 'number' ? `₦${s.fee.toLocaleString()}` : (s.fee || 'Varies'),
+              status: statusMap[st] || 'Available',
+              priority: s.priority || undefined,
+            };
+          });
+        setHousingServices(normalized);
+      } catch (e) {
+        setHousingServices([]);
       }
-    ];
-    setApplications(mockApplications);
-
-    const mockPropertyRecords: PropertyRecord[] = [
-      {
-        id: '1',
-        propertyType: 'Residential',
-        address: '45 New Haven Street, Ndoni',
-        owner: 'Mrs. Grace Okoro',
-        registrationNumber: 'OLG/RES/2023/001',
-        size: '600 sqm',
-        value: '₦15,000,000',
-        status: 'Active',
-        registrationDate: '2023-08-15',
-        permits: ['Building Permit', 'Occupancy Certificate']
-      },
-      {
-        id: '2',
-        propertyType: 'Commercial',
-        address: '12 Market Street, Ndoni',
-        owner: 'Onelga Trading Co.',
-        registrationNumber: 'OLG/COM/2023/005',
-        size: '800 sqm',
-        value: '₦25,000,000',
-        status: 'Active',
-        registrationDate: '2023-11-22',
-        permits: ['Commercial Permit', 'Fire Safety Certificate']
+      // Programs endpoint not defined → show fallback programs
+      setHousingPrograms(programsFallback);
+    };
+    const loadApplications = async () => {
+      try {
+        const resp = await applicationsAPI.getApplications({ type: 'HOUSING_APPLICATION', limit: 10, page: 1 } as any);
+        const data: any = resp.data;
+        const apps = Array.isArray(data?.applications) ? data.applications : (Array.isArray(data) ? data : []);
+        const mapped: HousingApplication[] = apps.map((app: any) => {
+          const stRaw = (app.status || '').toString().toUpperCase();
+          const statusMap: Record<string, HousingApplication['status']> = {
+            PENDING: 'Submitted',
+            UNDER_REVIEW: 'Under Review',
+            APPROVED: 'Approved',
+            REJECTED: 'Rejected',
+            COMPLETED: 'Completed',
+          };
+          return {
+            id: app.id?.toString() || app._id?.toString() || Math.random().toString(),
+            serviceId: app.serviceId || app.type || 'housing',
+            serviceName: app.serviceName || app.type || 'Housing Service',
+            applicantName: app.data?.applicantName || '-',
+            propertyAddress: app.data?.propertyAddress || '-',
+            applicationDate: app.createdAt || new Date().toISOString(),
+            status: statusMap[stRaw] || 'Submitted',
+            referenceNumber: app.reference || app.referenceNumber,
+            estimatedCost: app.data?.estimatedCost,
+            completionDate: app.completionDate,
+            notes: app.notes,
+          };
+        });
+        setApplications(mapped);
+      } catch (e) {
+        setApplications([]);
       }
-    ];
-    setPropertyRecords(mockPropertyRecords);
+      setPropertyRecords([]);
+    };
+    loadServices();
+    loadApplications();
   }, []);
 
   // Handle service application
@@ -388,17 +294,37 @@ const HousingServicesPage: React.FC = () => {
     }
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const newApplication: HousingApplication = {
-        id: Date.now().toString(),
+      const payload = {
+        type: 'HOUSING_APPLICATION',
         serviceId: selectedService.id,
-        serviceName: selectedService.name,
-        applicantName: applicationForm.applicantName,
-        propertyAddress: applicationForm.propertyAddress,
-        applicationDate: new Date().toISOString(),
-        status: 'Submitted',
-        referenceNumber: `HOU${Date.now()}`,
+        data: {
+          applicantName: applicationForm.applicantName,
+          phoneNumber: applicationForm.phoneNumber,
+          email: applicationForm.email,
+          address: applicationForm.address,
+          propertyAddress: applicationForm.propertyAddress,
+          propertyType: applicationForm.propertyType,
+          proposedUse: applicationForm.proposedUse,
+          estimatedCost: applicationForm.estimatedCost,
+          projectDescription: applicationForm.projectDescription,
+          hasUtilities: applicationForm.hasUtilities,
+          hasAccess: applicationForm.hasAccess,
+          emergencyContact: applicationForm.emergencyContact,
+          additionalInfo: applicationForm.additionalInfo,
+        },
+      };
+      const resp = await applicationsAPI.createApplication(payload);
+      const created: any = resp.data || {};
+      const newApplication: HousingApplication = {
+        id: created.id?.toString() || Math.random().toString(),
+        serviceId: created.serviceId || selectedService.id,
+        serviceName: created.serviceName || selectedService.name,
+        applicantName: created.data?.applicantName || applicationForm.applicantName,
+        propertyAddress: created.data?.propertyAddress || applicationForm.propertyAddress,
+        applicationDate: created.createdAt || new Date().toISOString(),
+        status: (created.status || 'Submitted') as HousingApplication['status'],
+        referenceNumber: created.reference || created.referenceNumber,
+        estimatedCost: created.data?.estimatedCost,
       };
 
       setApplications(prev => [newApplication, ...prev]);

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -29,6 +29,7 @@ import {
   AdminPanelSettings as AdminIcon,
   AccountBalance as OfficialIcon,
   ArrowDropDown as ArrowDropDownIcon,
+  Newspaper as NewspaperIcon,
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -46,6 +47,7 @@ const getNavigationLinks = (role?: string) => {
     { label: 'Dashboard', to: '/dashboard', icon: DashboardIcon },
     { label: 'Applications', to: '/applications', icon: ApplicationIcon },
     { label: 'Services', to: '/services' },
+    { label: 'News', to: '/news', icon: NewspaperIcon },
   ];
 
   switch (role) {
@@ -88,7 +90,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch('/api/auth/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -139,9 +141,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const toggleMobile = () => setMobileOpen((v) => !v);
   
+  // Build asset base URL for static files served outside /api
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+  const ASSET_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
+
+  // Memoize avatar URL with cache-busting when the profile picture path changes
+  const avatarSrc = useMemo(() => {
+    if (!user?.profilePicture) return undefined;
+    return `${ASSET_BASE_URL}${user.profilePicture}?cb=${Date.now()}`;
+  }, [user?.profilePicture, ASSET_BASE_URL]);
+
   const navigationLinks = isAuthenticated ? getNavigationLinks(user?.role) : [
     { label: 'Home', to: '/' },
     { label: 'Services', to: '/services' },
+    { label: 'News', to: '/news', icon: NewspaperIcon },
   ];
 
   return (
@@ -219,7 +232,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     color="inherit"
                     onClick={handleUserMenuOpen}
                     startIcon={
-                      <Avatar sx={{ width: 28, height: 28 }}>
+                      <Avatar src={avatarSrc} sx={{ width: 28, height: 28 }}>
                         {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                       </Avatar>
                     }
@@ -294,7 +307,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <>
                 {/* User info */}
                 <Box sx={{ p: 2, textAlign: 'center' }}>
-                  <Avatar sx={{ width: 48, height: 48, bgcolor: 'primary.main', mx: 'auto', mb: 1 }}>
+                  <Avatar src={avatarSrc} sx={{ width: 48, height: 48, bgcolor: 'primary.main', mx: 'auto', mb: 1 }}>
                     {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
                   </Avatar>
                   <Typography variant="body2" fontWeight={600}>

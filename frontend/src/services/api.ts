@@ -242,28 +242,28 @@ export const applicationsAPI = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.type) queryParams.append('type', params.type);
     
-    const url = `/applications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/profile/applications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return apiService.get<any[]>(url);
   },
 
   // Get application by ID
   getApplication: async (id: string) => {
-    return apiService.get<any>(`/applications/${id}`);
+    return apiService.get<any>(`/profile/applications/${id}`);
   },
 
   // Create application
   createApplication: async (applicationData: any) => {
-    return apiService.post<any>('/applications', applicationData);
+    return apiService.post<any>('/profile/applications', applicationData);
   },
 
   // Update application
   updateApplication: async (id: string, applicationData: any) => {
-    return apiService.put<any>(`/applications/${id}`, applicationData);
+    return apiService.put<any>(`/profile/applications/${id}`, applicationData);
   },
 
   // Delete application
   deleteApplication: async (id: string) => {
-    return apiService.delete(`/applications/${id}`);
+    return apiService.delete(`/profile/applications/${id}`);
   },
 
   // Get birth certificate applications
@@ -292,7 +292,7 @@ export const identificationAPI = {
   // Apply for identification letter
   apply: async (applicationData: {
     purpose: string;
-    documents?: string;
+    documents?: string; // backend expects a single string value
   }) => {
     return apiService.post<any>('/identification/apply', applicationData);
   },
@@ -319,7 +319,7 @@ export const identificationAPI = {
 
   // Download letter
   downloadLetter: async (id: string) => {
-    return apiService.get<any>(`/identification/applications/${id}/download`);
+    return apiService.get<any>(`/identification/download/${id}`);
   },
 };
 
@@ -389,7 +389,20 @@ export const businessAPI = {
   },
 };
 
-// File Upload API
+// Documents API
+export const documentsAPI = {
+  upload: async (file: File, applicationId?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (applicationId) formData.append('applicationId', applicationId);
+    return apiService.upload<any>('/documents/upload', formData);
+  },
+  getDownloadInfo: async (id: string) => {
+    return apiService.get<any>(`/documents/${id}/download`);
+  },
+};
+
+// File Upload API (legacy upload endpoints)
 export const uploadAPI = {
   // Upload file
   uploadFile: async (file: File, serviceType: string) => {
@@ -468,7 +481,7 @@ export const adminAPI = {
     if (params?.status) queryParams.append('status', params.status);
     
     const url = `/admin/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    return apiService.get<any[]>(url);
+    return apiService.get<{ users: any[]; pagination: { page: number; limit: number; total: number; pages: number } }>(url);
   },
 
   // Update user
@@ -489,6 +502,31 @@ export const adminAPI = {
   // Delete user
   deleteUser: async (userId: string) => {
     return apiService.delete(`/admin/users/${userId}`);
+  },
+
+  // Admin applications (from profile-admin endpoints)
+  getApplications: async (params?: {
+    page?: number;
+    limit?: number;
+    type?: string;
+    status?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.type) queryParams.append('type', params.type);
+    if (params?.status) queryParams.append('status', params.status);
+
+    const url = `/profile/admin/applications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return apiService.get<any>(url);
+  },
+
+  getApplication: async (id: string) => {
+    return apiService.get<any>(`/profile/admin/applications/${id}`);
+  },
+
+  updateApplicationStatus: async (id: string, status: 'PENDING' | 'UNDER_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED') => {
+    return apiService.put<any>(`/profile/admin/applications/${id}/status`, { status });
   },
 };
 

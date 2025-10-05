@@ -400,10 +400,10 @@ describe('Security Middleware', () => {
   });
 
   describe('Request Logger', () => {
-    let consoleSpy: jest.SpyInstance;
+    let consoleSpy: any;
 
     beforeEach(() => {
-      consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     afterEach(() => {

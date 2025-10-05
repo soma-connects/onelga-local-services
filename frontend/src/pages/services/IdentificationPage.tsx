@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { identificationAPI } from '../../services/api';
 import {
   Container,
   Typography,
@@ -133,6 +134,9 @@ const LocalIdentificationPage: React.FC = () => {
   const [ninVerification, setNinVerification] = useState<NinVerificationResult | null>(null);
   const [ninVerifying, setNinVerifying] = useState(false);
   // NIN Verification Handler
+  // Note: In production, you would integrate with a government or third-party NIN verification API (e.g., NIMC API in Nigeria).
+  // This usually requires registration and credentials from the NIMC or a licensed aggregator.
+  // Example API call: fetch('https://api.nimc.gov.ng/verify-nin', { method: 'POST', body: JSON.stringify({ nin: formData.nin }) })
   const handleVerifyNin = async () => {
     setNinVerification(null);
     setNinVerifying(true);
@@ -153,15 +157,21 @@ const LocalIdentificationPage: React.FC = () => {
   // Nigerian LGAs and Wards (simplified for demo)
   const lgas = [
     'Onelga',
+    'Ogba/Egbema/Ndoni',
+    'Ogba/Egbema/Ndoni (ONELGA)',
     'Ahoada East',
     'Ahoada West',
-    'Ogba/Egbema/Ndoni',
     'Omuma',
     'Other'
   ];
 
-  const wards = {
-    'Onelga': ['Ndoni Ward 1', 'Ndoni Ward 2', 'Egbema Ward', 'Omoku Ward', 'Agi Ward'],
+  // Provide consistent ward lists for ONELGA regardless of label variant (WORD1..WORD16)
+  const onelgaWards = Array.from({ length: 16 }, (_, i) => `WORD${i + 1}`);
+
+  const wards: Record<string, string[]> = {
+    'Onelga': onelgaWards,
+    'Ogba/Egbema/Ndoni': onelgaWards,
+    'Ogba/Egbema/Ndoni (ONELGA)': onelgaWards,
     'Other': ['Please specify in address']
   };
 
@@ -281,15 +291,23 @@ const LocalIdentificationPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      const refNum = `LID${Date.now()}`;
-      setReferenceNumber(refNum);
+      const documents: string[] = uploadedFiles
+        .filter(f => !!f.type)
+        .map(f => f.type);
+      const documentsString = documents.join(', ');
+
+      const res = await identificationAPI.apply({
+        purpose: formData.reasonForApplication || 'Identification letter request',
+        documents: documentsString,
+      });
+
+      const payload: any = (res as any)?.data ?? res;
+      const ref = payload?.letterNumber || payload?.reference || payload?.referenceNumber || payload?.id || `LID${Date.now()}`;
+      setReferenceNumber(ref);
       setApplicationSubmitted(true);
       toast.success('Application submitted successfully!');
-    } catch (error) {
-      toast.error('Failed to submit application. Please try again.');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to submit application. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -411,14 +429,6 @@ const LocalIdentificationPage: React.FC = () => {
                 )
               )}
             </Grid>
-// --- NIN Verification API Integration Note ---
-// To verify NIN, you would typically call a government or third-party NIN verification API (e.g., NIMC API in Nigeria).
-// This usually requires registration and credentials from the NIMC or a licensed aggregator.
-// Example (pseudo-code):
-//   fetch('https://api.nimc.gov.ng/verify-nin', { method: 'POST', body: { nin: formData.nin } })
-//     .then(res => res.json())
-//     .then(data => { /* handle verification result */ })
-// For demo, this is not implemented. You can add a button to trigger verification and display the result.
             
             <Grid item xs={12} sm={6}>
               <TextField
@@ -526,8 +536,8 @@ const LocalIdentificationPage: React.FC = () => {
                 onChange={(e) => handleInputChange('lga', e.target.value)}
                 required
               >
-                {riversStateLGAs.map((lga) => (
-                  <MenuItem key={lga.name} value={lga.name}>{lga.name}</MenuItem>
+                {lgas.map((lga) => (
+                  <MenuItem key={lga} value={lga}>{lga}</MenuItem>
                 ))}
               </TextField>
             </Grid>
@@ -541,7 +551,7 @@ const LocalIdentificationPage: React.FC = () => {
                 required
                 disabled={!formData.lga}
               >
-                {(riversStateLGAs.find(lga => lga.name === formData.lga)?.wards || []).map((ward) => (
+                {(wards[formData.lga as keyof typeof wards] || []).map((ward) => (
                   <MenuItem key={ward} value={ward}>{ward}</MenuItem>
                 ))}
               </TextField>

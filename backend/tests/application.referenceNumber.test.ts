@@ -13,18 +13,20 @@ describe('Application Reference Number Uniqueness', () => {
     // Create first application
     const res1 = await request(app)
       .post('/api/identification/apply')
-      .send({ businessName: 'Test Business Unique', /* other required fields */ });
+      .send({ purpose: 'Employment verification', /* other required fields */ });
     expect(res1.status).toBe(201);
-    const { referenceNumber } = res1.body;
+    const referenceNumber = res1.body.data?.application?.referenceNumber;
     expect(referenceNumber).toBeDefined();
 
     // Attempt to create another application with the same reference number (simulate collision)
-    // This assumes the API allows setting referenceNumber for test; if not, skip this part
+    // This simulates a database constraint violation
     const res2 = await prisma.application.create({
       data: {
+        userId: 'test-user-id',
+        type: 'IDENTIFICATION_LETTER',
         businessName: 'Test Business Unique',
         referenceNumber,
-        // ...other required fields
+        status: 'PENDING'
       },
     }).catch(e => e);
     expect(res2.code === 'P2002' || res2.message.includes('Unique constraint')).toBe(true);

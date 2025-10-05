@@ -6,15 +6,14 @@ import { body, param, query } from 'express-validator';
 
 const router = Router();
 
-// Apply authentication and admin role requirement to all admin routes
+// Apply authentication to all admin routes
 router.use(authenticateToken);
-router.use(requireRole(['ADMIN']));
 
-// Dashboard Statistics
-router.get('/dashboard/stats', adminController.getDashboardStats.bind(adminController));
+// Dashboard Statistics (Admin or Official)
+router.get('/dashboard/stats', requireRole(['ADMIN','OFFICIAL']), adminController.getDashboardStats.bind(adminController));
 
-// Admin: Get all applications
-router.get('/applications', async (req, res) => {
+// Admin/Official: Get all applications (read-only for Official)
+router.get('/applications', requireRole(['ADMIN','OFFICIAL']), async (req, res) => {
   try {
     // Only admins can access (middleware already applied)
   const { page = 1, limit = 20, status, priority, serviceType, search } = req.query;
@@ -26,7 +25,7 @@ router.get('/applications', async (req, res) => {
 
   // Add search by applicant name or email
   if (search) {
-    where.user = {
+    where['user'] = {
       OR: [
         { firstName: { contains: search, mode: 'insensitive' } },
         { lastName: { contains: search, mode: 'insensitive' } },
@@ -73,6 +72,7 @@ router.get('/users',
     query('sortOrder').optional().isIn(['asc', 'desc']).withMessage('Sort order must be asc or desc')
   ],
   validateRequest,
+  requireRole(['ADMIN','OFFICIAL']),
   adminController.getUsers.bind(adminController)
 );
 
@@ -81,6 +81,7 @@ router.get('/users/:userId',
     param('userId').isUUID().withMessage('Invalid user ID format')
   ],
   validateRequest,
+  requireRole(['ADMIN','OFFICIAL']),
   adminController.getUserDetails.bind(adminController)
 );
 
@@ -98,6 +99,7 @@ router.put('/users/:userId',
     body('isVerified').optional().isBoolean()
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.updateUser.bind(adminController)
 );
 
@@ -106,6 +108,7 @@ router.delete('/users/:userId',
     param('userId').isUUID().withMessage('Invalid user ID format')
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.deleteUser.bind(adminController)
 );
 
@@ -117,6 +120,7 @@ router.post('/users/:userId/suspend',
     body('duration').optional().isString().trim()
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.suspendUser.bind(adminController)
 );
 
@@ -126,6 +130,7 @@ router.post('/users/:userId/reactivate',
     body('reason').optional().isString().trim()
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.reactivateUser.bind(adminController)
 );
 
@@ -138,6 +143,7 @@ router.post('/users/:userId/message',
     body('type').optional().isIn(['INFO', 'WARNING', 'SUCCESS', 'ERROR']).withMessage('Invalid message type')
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.sendMessage.bind(adminController)
 );
 
@@ -153,6 +159,7 @@ router.post('/notifications/bulk',
     }).withMessage('Invalid notification channels')
   ],
   validateRequest,
+  requireRole(['ADMIN']),
   adminController.sendBulkNotification.bind(adminController)
 );
 
@@ -169,6 +176,7 @@ router.get('/audit-logs',
     query('endDate').optional().isISO8601().withMessage('Invalid end date format')
   ],
   validateRequest,
+  requireRole(['ADMIN','OFFICIAL']),
   adminController.getAuditLogs.bind(adminController)
 );
 
